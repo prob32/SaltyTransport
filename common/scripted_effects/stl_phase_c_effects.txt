@@ -1,0 +1,766 @@
+﻿# ========================================
+# PHASE C: PER-STATE TRADE + APPLY MODIFIERS (DIRECTION-AWARE MODEL)
+#
+# Part of the two-phase monthly distribution cycle:
+#   Phase B (days 8-20): BFS + direction-aware effective surplus
+#                         WAS/WAD + production-weighted market price
+#   Phase C (days 21-28): EMA smoothing + conservation normalize + apply modifiers
+#
+# Direction-aware effective surplus model:
+#   Phase B reads previous trade direction (stl_last_import/export)
+#   and computes direction-aware targets that respect existing trade.
+#   Overshoot reduces existing trade instead of flipping direction.
+#   Phase C just EMAs toward the Phase B target and applies rate cap.
+#
+# Phase C processes all 49 goods in 8 batches of ~6 goods each.
+# For each good:
+#   Clear old modifiers (so old values stay active until replaced)
+#   Sub-pass 3d: Compute per-state trade amounts
+#     - Exporters: trade = eff_export (no demand cap — conservation balances)
+#     - Importers: trade = eff_import
+#     - Both sides: EMA 20/80 (always, incl. new routes) + rate cap (90%/cycle, floor 40)
+#     - Gradual decay: when signal disappears, trade decays 20%/cycle (not instant)
+#   Sub-pass 3d.5: Conservation normalization (sum exports = sum imports)
+#   Sub-pass 3d.75: Trade cost (importers): max_WAS/WAS ratio (capped 1-10)
+#   Sub-pass 3e: Compute Access % for GUI display
+#
+# Trade cost (importers): cost_factor = max_WAS / WAS (capped 1-10)
+#   max_WAS = eff_surp x 100, WAS = eff_surp x proximity
+#   Ratio measures distance penalty (pure proximity factor).
+# Reads eff_export/eff_import and WAS/WAD/max from Phase B.
+# ========================================
+
+# Phase C batch dispatcher — processes ~6 goods per call
+# Scope: country (market owner)
+stl_phase_c_batch = {
+	# Initialize counter if missing
+	if = {
+		limit = { NOT = { has_variable = stl_phase_c_batch_idx } }
+		set_variable = { name = stl_phase_c_batch_idx value = 0 }
+	}
+
+	# ===== BATCH 0: grain, fish, groceries, wood, furniture, paper =====
+	if = {
+		limit = { NOT = { var:stl_phase_c_batch_idx >= 1 } }
+		stl_phase_c_good = { GOODS = grain }
+		stl_phase_c_good = { GOODS = fish }
+		stl_phase_c_good = { GOODS = groceries }
+		stl_phase_c_good = { GOODS = wood }
+		stl_phase_c_good = { GOODS = furniture }
+		stl_phase_c_good = { GOODS = paper }
+	}
+	# ===== BATCH 1: merchant_marine, coal, iron, lead, sulfur, hardwood =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 1 NOT = { var:stl_phase_c_batch_idx >= 2 } }
+		stl_phase_c_good = { GOODS = merchant_marine }
+		stl_phase_c_good = { GOODS = coal }
+		stl_phase_c_good = { GOODS = iron }
+		stl_phase_c_good = { GOODS = lead }
+		stl_phase_c_good = { GOODS = sulfur }
+		stl_phase_c_good = { GOODS = hardwood }
+	}
+	# ===== BATCH 2: rubber, oil, silk, dye, clippers, steamers =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 2 NOT = { var:stl_phase_c_batch_idx >= 3 } }
+		stl_phase_c_good = { GOODS = rubber }
+		stl_phase_c_good = { GOODS = oil }
+		stl_phase_c_good = { GOODS = silk }
+		stl_phase_c_good = { GOODS = dye }
+		stl_phase_c_good = { GOODS = clippers }
+		stl_phase_c_good = { GOODS = steamers }
+	}
+	# ===== BATCH 3: glass, fertilizer, tools, steel, engines, explosives =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 3 NOT = { var:stl_phase_c_batch_idx >= 4 } }
+		stl_phase_c_good = { GOODS = glass }
+		stl_phase_c_good = { GOODS = fertilizer }
+		stl_phase_c_good = { GOODS = tools }
+		stl_phase_c_good = { GOODS = steel }
+		stl_phase_c_good = { GOODS = engines }
+		stl_phase_c_good = { GOODS = explosives }
+	}
+	# ===== BATCH 4: ammunition, small_arms, artillery, tanks, aeroplanes, manowars =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 4 NOT = { var:stl_phase_c_batch_idx >= 5 } }
+		stl_phase_c_good = { GOODS = ammunition }
+		stl_phase_c_good = { GOODS = small_arms }
+		stl_phase_c_good = { GOODS = artillery }
+		stl_phase_c_good = { GOODS = tanks }
+		stl_phase_c_good = { GOODS = aeroplanes }
+		stl_phase_c_good = { GOODS = manowars }
+	}
+	# ===== BATCH 5: ironclads, meat, fruit, sugar, tobacco, liquor =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 5 NOT = { var:stl_phase_c_batch_idx >= 6 } }
+		stl_phase_c_good = { GOODS = ironclads }
+		stl_phase_c_good = { GOODS = meat }
+		stl_phase_c_good = { GOODS = fruit }
+		stl_phase_c_good = { GOODS = sugar }
+		stl_phase_c_good = { GOODS = tobacco }
+		stl_phase_c_good = { GOODS = liquor }
+	}
+	# ===== BATCH 6: wine, tea, coffee, opium, porcelain, luxury_clothes =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 6 NOT = { var:stl_phase_c_batch_idx >= 7 } }
+		stl_phase_c_good = { GOODS = wine }
+		stl_phase_c_good = { GOODS = tea }
+		stl_phase_c_good = { GOODS = coffee }
+		stl_phase_c_good = { GOODS = opium }
+		stl_phase_c_good = { GOODS = porcelain }
+		stl_phase_c_good = { GOODS = luxury_clothes }
+	}
+	# ===== BATCH 7: luxury_furniture, automobiles, telephones, radios, fine_art, fabric, clothes =====
+	if = {
+		limit = { var:stl_phase_c_batch_idx >= 7 }
+		stl_phase_c_good = { GOODS = luxury_furniture }
+		stl_phase_c_good = { GOODS = automobiles }
+		stl_phase_c_good = { GOODS = telephones }
+		stl_phase_c_good = { GOODS = radios }
+		stl_phase_c_good = { GOODS = fine_art }
+		stl_phase_c_good = { GOODS = fabric }
+		stl_phase_c_good = { GOODS = clothes }
+	}
+
+	# Advance batch counter
+	change_variable = { name = stl_phase_c_batch_idx add = 1 }
+}
+
+# Process a single good through Phase C: normalize + apply modifiers
+# Reads eff_export/eff_import and WAS/WAD (Phase B)
+# Scope: country (market owner)
+stl_phase_c_good = {
+
+	# ===== CLEAR OLD MODIFIERS + ZERO TRACKING VARS =====
+	# Done here (not in Phase B) so old modifiers and GUI values stay
+	# active until replaced in the same effect call.
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_building = building_stl_trade_depot
+				}
+				# Refresh building ref (prevents stale refs from demolished/rebuilt buildings)
+				random_scope_building = {
+					limit = { is_building_type = building_stl_trade_depot }
+					prev = {
+						set_variable = { name = stl_trade_depot_ref value = prev }
+					}
+				}
+				if = {
+					limit = { has_variable = stl_trade_depot_ref }
+					var:stl_trade_depot_ref = {
+						remove_modifier = stl_export_$GOODS$
+						remove_modifier = stl_import_$GOODS$
+						remove_modifier = stl_transport_$GOODS$
+						remove_modifier = stl_debug_base_$GOODS$
+						remove_modifier = stl_debug_access_$GOODS$
+					}
+				}
+				# NOTE: stl_last_export/import NOT zeroed here — sub-pass 3d reads them for
+				# EMA smoothing, then zeros + overwrites in the same every_scope_state block.
+				# K guard failure: old values persist but modifiers are already removed above.
+				set_variable = { name = stl_transport_$GOODS$ value = 0 }
+				# NOTE: stl_market_price NOT zeroed — set by Phase B (weighted avg).
+			}
+		}
+	}
+
+	# ===== MARKET PRICE =====
+	# stl_market_price_$GOODS$ is now set by Phase B (weighted avg source price).
+	# No vanilla equilibrium computation needed — Phase B handles it.
+
+	# ===== SUB-PASS 3d: PER-STATE TRADE AMOUNTS (REVENUE MODEL) =====
+	# Exporters: offer = reachable_demand × export_price_gate
+	# Importers: trade = deficit (no supply cap, no profit gate — price in WAS)
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					has_building = building_stl_trade_depot
+				}
+
+				# EMA: save old trade values as local vars before zeroing
+				# (Uses local vars to avoid stl_prev_* state vars that trigger engine warnings)
+				# Guard with has_variable for first-run / new depots where stl_last_* doesn't exist yet
+				set_local_variable = { name = stl_old_export value = 0 }
+				if = {
+					limit = { has_variable = stl_last_export_$GOODS$ }
+					set_local_variable = { name = stl_old_export value = var:stl_last_export_$GOODS$ }
+				}
+				set_local_variable = { name = stl_old_import value = 0 }
+				if = {
+					limit = { has_variable = stl_last_import_$GOODS$ }
+					set_local_variable = { name = stl_old_import value = var:stl_last_import_$GOODS$ }
+				}
+				set_variable = { name = stl_last_export_$GOODS$ value = 0 }
+				set_variable = { name = stl_last_import_$GOODS$ value = 0 }
+
+				# --- Exporters: Phase B target is direction-aware (full target, not residual) ---
+				# Phase B already handles direction persistence and overshoot reduction.
+				# Phase C just EMAs toward the target and applies rate cap.
+				if = {
+					limit = {
+						has_variable = stl_eff_export_$GOODS$
+						var:stl_eff_export_$GOODS$ > 0
+						has_variable = stl_wad_$GOODS$
+						has_variable = stl_max_wad_$GOODS$
+						var:stl_max_wad_$GOODS$ > 0.01
+					}
+
+					# Phase B target (already direction-aware)
+					set_local_variable = { name = stl_trade_amount value = var:stl_eff_export_$GOODS$ }
+
+					# No max_WAD/100 cap — exports grow freely, limited by:
+					# 1. own_eff shrinks as local price rises (natural equilibrium)
+					# 2. EMA + rate cap below
+					# 3. Conservation normalization (sub-pass 3d.5) balances totals
+
+					# EMA smoothing: blend 20/80 toward Phase B target
+					set_local_variable = {
+						name = stl_trade_amount
+						value = {
+							value = local_var:stl_trade_amount
+							multiply = 0.8
+							add = {
+								value = local_var:stl_old_export
+								multiply = 0.2
+							}
+						}
+					}
+
+					# Rate cap: max 90% increase per cycle, floor 40.0 for new/small routes
+					set_local_variable = {
+						name = stl_rate_cap
+						value = { value = local_var:stl_old_export multiply = 0.9 }
+					}
+					if = {
+						limit = { NOT = { local_var:stl_rate_cap >= 40 } }
+						set_local_variable = { name = stl_rate_cap value = 40 }
+					}
+					set_local_variable = {
+						name = stl_cap_up
+						value = { value = local_var:stl_old_export add = local_var:stl_rate_cap }
+					}
+					if = {
+						limit = { local_var:stl_trade_amount > local_var:stl_cap_up }
+						set_local_variable = { name = stl_trade_amount value = local_var:stl_cap_up }
+					}
+
+					# Store + apply
+					set_variable = { name = stl_last_export_$GOODS$ value = local_var:stl_trade_amount }
+					var:stl_trade_depot_ref = {
+						add_modifier = {
+							name = stl_export_$GOODS$
+							multiplier = stl_trade_multiplier
+						}
+					}
+
+					# Debug
+					if = {
+						limit = { global_var:stl_debug_mode >= 1 }
+						set_local_variable = { name = stl_debug_base value = var:stl_eff_export_$GOODS$ }
+						var:stl_trade_depot_ref = {
+							add_modifier = {
+								name = stl_debug_base_$GOODS$
+								multiplier = stl_debug_base_multiplier
+							}
+						}
+						set_local_variable = {
+							name = stl_debug_access
+							value = {
+								value = var:stl_wad_$GOODS$
+								divide = var:stl_max_wad_$GOODS$
+							}
+						}
+						var:stl_trade_depot_ref = {
+							add_modifier = {
+								name = stl_debug_access_$GOODS$
+								multiplier = stl_debug_access_multiplier
+							}
+						}
+					}
+				}
+
+				# --- Importers: Phase B target is direction-aware (full target, not residual) ---
+				if = {
+					limit = {
+						has_variable = stl_eff_import_$GOODS$
+						var:stl_eff_import_$GOODS$ > 0
+						has_variable = stl_was_$GOODS$
+						has_variable = stl_max_was_$GOODS$
+						var:stl_max_was_$GOODS$ > 0.01
+					}
+
+					# Phase B target (already direction-aware)
+					set_local_variable = { name = stl_trade_amount value = var:stl_eff_import_$GOODS$ }
+
+					# EMA smoothing: blend 20/80 toward Phase B target
+					set_local_variable = {
+						name = stl_trade_amount
+						value = {
+							value = local_var:stl_trade_amount
+							multiply = 0.8
+							add = {
+								value = local_var:stl_old_import
+								multiply = 0.2
+							}
+						}
+					}
+
+					# Rate cap: max 90% increase per cycle, floor 40.0 for new/small routes
+					set_local_variable = {
+						name = stl_rate_cap
+						value = { value = local_var:stl_old_import multiply = 0.9 }
+					}
+					if = {
+						limit = { NOT = { local_var:stl_rate_cap >= 40 } }
+						set_local_variable = { name = stl_rate_cap value = 40 }
+					}
+					set_local_variable = {
+						name = stl_cap_up
+						value = { value = local_var:stl_old_import add = local_var:stl_rate_cap }
+					}
+					if = {
+						limit = { local_var:stl_trade_amount > local_var:stl_cap_up }
+						set_local_variable = { name = stl_trade_amount value = local_var:stl_cap_up }
+					}
+
+					# Store + apply
+					set_variable = { name = stl_last_import_$GOODS$ value = local_var:stl_trade_amount }
+					var:stl_trade_depot_ref = {
+						add_modifier = {
+							name = stl_import_$GOODS$
+							multiplier = stl_trade_multiplier
+						}
+					}
+
+					# Debug
+					if = {
+						limit = { global_var:stl_debug_mode >= 1 }
+						set_local_variable = { name = stl_debug_base value = var:stl_eff_import_$GOODS$ }
+						var:stl_trade_depot_ref = {
+							add_modifier = {
+								name = stl_debug_base_$GOODS$
+								multiplier = stl_debug_base_multiplier
+							}
+						}
+						set_local_variable = {
+							name = stl_debug_access
+							value = {
+								value = var:stl_was_$GOODS$
+								divide = var:stl_max_was_$GOODS$
+							}
+						}
+						var:stl_trade_depot_ref = {
+							add_modifier = {
+								name = stl_debug_access_$GOODS$
+								multiplier = stl_debug_access_multiplier
+							}
+						}
+					}
+				}
+
+				# --- Gradual decay: safety net when WAS/WAD prereqs fail ---
+				# Don't decay if the state has flipped to the other direction
+				if = {
+					limit = {
+						local_var:stl_old_export > 0.5
+						NOT = { var:stl_last_export_$GOODS$ > 0.01 }
+						NOT = { var:stl_last_import_$GOODS$ > 0.01 }
+					}
+					set_local_variable = {
+						name = stl_trade_amount
+						value = { value = local_var:stl_old_export multiply = 0.8 }
+					}
+					if = {
+						limit = { local_var:stl_trade_amount > 0.5 }
+						set_variable = { name = stl_last_export_$GOODS$ value = local_var:stl_trade_amount }
+						var:stl_trade_depot_ref = {
+							add_modifier = {
+								name = stl_export_$GOODS$
+								multiplier = stl_trade_multiplier
+							}
+						}
+					}
+				}
+				if = {
+					limit = {
+						local_var:stl_old_import > 0.5
+						NOT = { var:stl_last_import_$GOODS$ > 0.01 }
+						NOT = { var:stl_last_export_$GOODS$ > 0.01 }
+					}
+					set_local_variable = {
+						name = stl_trade_amount
+						value = { value = local_var:stl_old_import multiply = 0.8 }
+					}
+					if = {
+						limit = { local_var:stl_trade_amount > 0.5 }
+						set_variable = { name = stl_last_import_$GOODS$ value = local_var:stl_trade_amount }
+						var:stl_trade_depot_ref = {
+							add_modifier = {
+								name = stl_import_$GOODS$
+								multiplier = stl_trade_multiplier
+							}
+						}
+					}
+				}
+
+				# No fallback: if no gravity data (max_WAS/max_WAD = 0),
+				# the state has no reachable partners and should not trade.
+			}
+		}
+	}
+
+	# ===== SUB-PASS 3d.5: CONSERVATION NORMALIZATION =====
+	# Ensures sum(exports) = sum(imports) across the market.
+	# Prevents goods creation (importing from non-exporters).
+	# Uses global_var for cross-scope accumulation (state → market owner).
+	set_global_variable = { name = stl_sum_exports value = 0 }
+	set_global_variable = { name = stl_sum_imports value = 0 }
+
+	# Accumulate trade totals across all states in the market
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					has_building = building_stl_trade_depot
+				}
+				if = {
+					limit = { var:stl_last_export_$GOODS$ > 0 }
+					set_global_variable = {
+						name = stl_sum_exports
+						value = {
+							value = global_var:stl_sum_exports
+							add = var:stl_last_export_$GOODS$
+						}
+					}
+				}
+				if = {
+					limit = { var:stl_last_import_$GOODS$ > 0 }
+					set_global_variable = {
+						name = stl_sum_imports
+						value = {
+							value = global_var:stl_sum_imports
+							add = var:stl_last_import_$GOODS$
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# Compute normalization factors (default 1.0 = no scaling)
+	set_global_variable = { name = stl_norm_export value = 1 }
+	set_global_variable = { name = stl_norm_import value = 1 }
+	if = {
+		limit = {
+			global_var:stl_sum_exports > 0
+			global_var:stl_sum_imports > 0
+		}
+		# If imports > exports: scale imports down
+		if = {
+			limit = { global_var:stl_sum_imports > global_var:stl_sum_exports }
+			set_global_variable = {
+				name = stl_norm_import
+				value = {
+					value = global_var:stl_sum_exports
+					divide = global_var:stl_sum_imports
+				}
+			}
+		}
+		# If exports > imports: scale exports down
+		if = {
+			limit = { global_var:stl_sum_exports > global_var:stl_sum_imports }
+			set_global_variable = {
+				name = stl_norm_export
+				value = {
+					value = global_var:stl_sum_imports
+					divide = global_var:stl_sum_exports
+				}
+			}
+		}
+	}
+	# Edge: one side zero → zero the other entirely
+	if = {
+		limit = {
+			NOT = { global_var:stl_sum_exports > 0 }
+			global_var:stl_sum_imports > 0
+		}
+		set_global_variable = { name = stl_norm_import value = 0 }
+	}
+	if = {
+		limit = {
+			global_var:stl_sum_exports > 0
+			NOT = { global_var:stl_sum_imports > 0 }
+		}
+		set_global_variable = { name = stl_norm_export value = 0 }
+	}
+
+	# Apply normalization: remove modifier, scale value, re-apply
+	if = {
+		limit = {
+			OR = {
+				NOT = { global_var:stl_norm_export >= 1 }
+				NOT = { global_var:stl_norm_import >= 1 }
+			}
+		}
+		market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						has_variable = stl_trade_depot_ref
+						has_building = building_stl_trade_depot
+					}
+					# Scale exports if ratio < 1
+					if = {
+						limit = {
+							var:stl_last_export_$GOODS$ > 0
+							NOT = { global_var:stl_norm_export >= 1 }
+						}
+						var:stl_trade_depot_ref = {
+							remove_modifier = stl_export_$GOODS$
+						}
+						set_variable = {
+							name = stl_last_export_$GOODS$
+							value = {
+								value = var:stl_last_export_$GOODS$
+								multiply = global_var:stl_norm_export
+							}
+						}
+						if = {
+							limit = { var:stl_last_export_$GOODS$ > 0.5 }
+							set_local_variable = { name = stl_trade_amount value = var:stl_last_export_$GOODS$ }
+							var:stl_trade_depot_ref = {
+								add_modifier = {
+									name = stl_export_$GOODS$
+									multiplier = stl_trade_multiplier
+								}
+							}
+						}
+					}
+					# Scale imports if ratio < 1
+					if = {
+						limit = {
+							var:stl_last_import_$GOODS$ > 0
+							NOT = { global_var:stl_norm_import >= 1 }
+						}
+						var:stl_trade_depot_ref = {
+							remove_modifier = stl_import_$GOODS$
+						}
+						set_variable = {
+							name = stl_last_import_$GOODS$
+							value = {
+								value = var:stl_last_import_$GOODS$
+								multiply = global_var:stl_norm_import
+							}
+						}
+						if = {
+							limit = { var:stl_last_import_$GOODS$ > 0.5 }
+							set_local_variable = { name = stl_trade_amount value = var:stl_last_import_$GOODS$ }
+							var:stl_trade_depot_ref = {
+								add_modifier = {
+									name = stl_import_$GOODS$
+									multiplier = stl_trade_multiplier
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	# ===== SUB-PASS 3d.75: TRADE COST (DISTANCE-BASED) =====
+	# Importers pay trade cost based on source proximity.
+	# cost_factor = max_WAS / WAS = 100 / avg_proximity_weight
+	# Close sources -> factor near 1 -> low cost
+	# Distant sources -> factor up to 10 -> high cost
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					has_building = building_stl_trade_depot
+					has_variable = stl_last_import_$GOODS$
+					var:stl_last_import_$GOODS$ > 0
+					has_variable = stl_was_$GOODS$
+					has_variable = stl_max_was_$GOODS$
+					var:stl_was_$GOODS$ > 0.01
+				}
+
+				# cost_factor = max_WAS / WAS (clamped to [1, 10])
+				set_local_variable = {
+					name = stl_distance_factor
+					value = {
+						value = var:stl_max_was_$GOODS$
+						divide = var:stl_was_$GOODS$
+					}
+				}
+				# Floor at 1 (minimum 1x cost even for adjacent states)
+				if = {
+					limit = { NOT = { local_var:stl_distance_factor >= 1 } }
+					set_local_variable = { name = stl_distance_factor value = 1 }
+				}
+				# Cap at 10 (prevent runaway costs for extremely remote states)
+				if = {
+					limit = { local_var:stl_distance_factor > 10 }
+					set_local_variable = { name = stl_distance_factor value = 10 }
+				}
+
+				# transport_amount = import_volume × distance_factor
+				set_local_variable = {
+					name = stl_transport_amount
+					value = {
+						value = var:stl_last_import_$GOODS$
+						multiply = local_var:stl_distance_factor
+					}
+				}
+
+				# Store for GUI display
+				set_variable = {
+					name = stl_transport_$GOODS$
+					value = local_var:stl_transport_amount
+				}
+
+				# Compute transport cost = transport_amount × local_transport_price
+				# V3 price formula: local_price = base × (1 + PRICE_RANGE × (buy-sell)/max(buy,sell) / (BUY_SELL_DIFF_AT_MAX_FACTOR-1))
+				# With vanilla defines: PRICE_RANGE=0.75, BUY_SELL_DIFF_AT_MAX_FACTOR=2, so denominator=1 (no-op)
+				# transportation base_price = 30
+				# Initialize to 0 in case mg:transportation scope fails
+				set_local_variable = { name = stl_transport_buy value = 0 }
+				set_local_variable = { name = stl_transport_sell value = 0 }
+				market = {
+					mg:transportation = {
+						set_local_variable = { name = stl_transport_buy value = market_goods_buy_orders }
+						set_local_variable = { name = stl_transport_sell value = market_goods_sell_orders }
+					}
+				}
+				# price_ratio = (buy - sell) / max(buy, sell), handle edge cases
+				set_local_variable = {
+					name = stl_price_ratio
+					value = 0
+				}
+				if = {
+					limit = {
+						OR = {
+							local_var:stl_transport_buy > 0
+							local_var:stl_transport_sell > 0
+						}
+					}
+					set_local_variable = {
+						name = stl_price_ratio
+						value = {
+							value = local_var:stl_transport_buy
+							subtract = local_var:stl_transport_sell
+						}
+					}
+					# divide by max(buy, sell)
+					if = {
+						limit = { local_var:stl_transport_buy >= local_var:stl_transport_sell }
+						change_local_variable = {
+							name = stl_price_ratio
+							divide = local_var:stl_transport_buy
+						}
+					}
+					else = {
+						change_local_variable = {
+							name = stl_price_ratio
+							divide = local_var:stl_transport_sell
+						}
+					}
+					# Multiply by PRICE_RANGE (0.75)
+					change_local_variable = {
+						name = stl_price_ratio
+						multiply = define:NEconomy|PRICE_RANGE
+					}
+				}
+				# Apply transport modifier to depot
+				var:stl_trade_depot_ref = {
+					add_modifier = {
+						name = stl_transport_$GOODS$
+						multiplier = stl_transport_multiplier
+					}
+				}
+			}
+		}
+	}
+
+	# ===== SUB-PASS 3e: COMPUTE ACCESS % FOR GUI DISPLAY =====
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					has_building = building_stl_trade_depot
+				}
+
+		# Export Access %
+		if = {
+			limit = { has_variable = stl_eff_export_$GOODS$ var:stl_eff_export_$GOODS$ > 0.01 }
+			set_variable = {
+				name = stl_access_pct_export_$GOODS$
+				value = {
+					value = var:stl_last_export_$GOODS$
+					divide = var:stl_eff_export_$GOODS$
+					multiply = 100
+				}
+			}
+			# Cap at 100
+			if = {
+				limit = { var:stl_access_pct_export_$GOODS$ > 100 }
+				set_variable = { name = stl_access_pct_export_$GOODS$ value = 100 }
+			}
+			# Floor at 0
+			if = {
+				limit = { NOT = { var:stl_access_pct_export_$GOODS$ >= 0 } }
+				set_variable = { name = stl_access_pct_export_$GOODS$ value = 0 }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					NOT = { has_variable = stl_eff_export_$GOODS$ }
+					NOT = { var:stl_eff_export_$GOODS$ > 0.01 }
+				}
+			}
+			set_variable = { name = stl_access_pct_export_$GOODS$ value = 0 }
+		}
+
+		# Import Access %
+		if = {
+			limit = { has_variable = stl_eff_import_$GOODS$ var:stl_eff_import_$GOODS$ > 0.01 }
+			set_variable = {
+				name = stl_access_pct_import_$GOODS$
+				value = {
+					value = var:stl_last_import_$GOODS$
+					divide = var:stl_eff_import_$GOODS$
+					multiply = 100
+				}
+			}
+			# Cap at 100
+			if = {
+				limit = { var:stl_access_pct_import_$GOODS$ > 100 }
+				set_variable = { name = stl_access_pct_import_$GOODS$ value = 100 }
+			}
+			# Floor at 0
+			if = {
+				limit = { NOT = { var:stl_access_pct_import_$GOODS$ >= 0 } }
+				set_variable = { name = stl_access_pct_import_$GOODS$ value = 0 }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					NOT = { has_variable = stl_eff_import_$GOODS$ }
+					NOT = { var:stl_eff_import_$GOODS$ > 0.01 }
+				}
+			}
+			set_variable = { name = stl_access_pct_import_$GOODS$ value = 0 }
+		}
+			}
+		}
+	}
+
+}

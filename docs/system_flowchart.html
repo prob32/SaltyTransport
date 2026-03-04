@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salty Transport - System Flowchart</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --card: #16213e;
+    --border: #0f3460;
+    --accent: #e94560;
+    --text: #eee;
+    --muted: #999;
+    --model-color: #4ecca3;
+    --tooltip-color: #ffc93c;
+    --phase-b: #00b894;
+    --phase-c: #fd79a8;
+    --arrow: #555;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+    line-height: 1.5;
+  }
+  h1 { text-align: center; margin-bottom: 8px; font-size: 1.8em; }
+  .subtitle { text-align: center; color: var(--muted); margin-bottom: 24px; font-size: 0.95em; }
+  .legend {
+    display: flex; justify-content: center; gap: 32px; margin-bottom: 32px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px; font-size: 0.9em;
+  }
+  .legend-dot {
+    width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+  }
+  .flow-container {
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  /* Phase headers */
+  .phase-header {
+    padding: 10px 20px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 700;
+    font-size: 1.1em;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .phase-header .timing { font-weight: 400; font-size: 0.85em; opacity: 0.8; }
+  .phase-b-header { background: var(--phase-b); color: #111; }
+  .phase-c-header { background: var(--phase-c); color: #111; }
+
+  /* Phase body */
+  .phase-body {
+    border: 2px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    padding: 20px;
+    margin-bottom: 16px;
+    background: var(--card);
+  }
+
+  /* Component cards */
+  .component {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .component:last-child { margin-bottom: 0; }
+  .component.model { border-left: 4px solid var(--model-color); }
+  .component.tooltip-only { border-left: 4px solid var(--tooltip-color); }
+  .component h3 {
+    font-size: 0.95em; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .component h3 .tag {
+    font-size: 0.7em; padding: 2px 6px; border-radius: 3px;
+    font-weight: 600; text-transform: uppercase;
+  }
+  .tag-model { background: var(--model-color); color: #111; }
+  .tag-tooltip { background: var(--tooltip-color); color: #111; }
+  .tag-file { background: var(--border); color: var(--text); font-family: monospace; text-transform: none; }
+
+  .component p, .component ul {
+    font-size: 0.85em; color: #ccc;
+  }
+  .component ul { padding-left: 18px; }
+  .component li { margin-bottom: 2px; }
+  .formula {
+    background: #0d1b2a;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-family: 'Consolas', 'Fira Code', monospace;
+    font-size: 0.85em;
+    color: #7fdbca;
+    overflow-x: auto;
+  }
+  .var { color: #c792ea; }
+  .op { color: #89ddff; }
+  .comment { color: #546e7a; }
+
+  /* Arrows between phases */
+  .arrow-container {
+    text-align: center; padding: 8px 0;
+  }
+  .arrow-container svg { display: inline-block; }
+
+  /* Data flow section */
+  .data-flow {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    background: rgba(22, 33, 62, 0.5);
+  }
+  .data-flow h4 {
+    font-size: 0.85em; color: var(--muted); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .data-item {
+    display: inline-block;
+    background: #0d1b2a;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin: 2px 4px 2px 0;
+    font-family: monospace;
+    font-size: 0.8em;
+    color: #c792ea;
+  }
+
+  /* Sub-pass labels */
+  .subpass {
+    font-size: 0.75em;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  /* Tooltip section */
+  .tooltip-section {
+    margin-top: 32px;
+  }
+  .tooltip-header {
+    padding: 10px 20px;
+    border-radius: 8px 8px 0 0;
+    font-weight: 700;
+    font-size: 1.1em;
+    background: var(--tooltip-color);
+    color: #111;
+  }
+
+  /* Grid for sub-passes */
+  .subpass-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  @media (max-width: 700px) {
+    .subpass-grid { grid-template-columns: 1fr; }
+  }
+
+  .note {
+    font-size: 0.8em; color: var(--muted); font-style: italic;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Salty Transport System Flowchart</h1>
+<p class="subtitle">Effective Surplus Model &mdash; Monthly 2-Phase Cycle</p>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-dot" style="background: var(--model-color)"></div>
+    <span>Model (monthly, affects depot modifiers)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot" style="background: var(--tooltip-color)"></div>
+    <span>Tooltip only (on-demand, display only)</span>
+  </div>
+</div>
+
+<div class="flow-container">
+
+  <!-- ========== PHASE B ========== -->
+  <div class="phase-header phase-b-header">
+    Phase B: Bellman-Ford + WAS/WAD + Market Price
+    <span class="timing">Days 8&ndash;20</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="component model">
+      <h3>
+        B1: Bellman-Ford Infrastructure Friction
+        <span class="tag tag-model">Model</span>
+        <span class="tag tag-file">stl_distance_cache.txt</span>
+      </h3>
+      <p>Runs <strong>once per origin state</strong>. Computes shortest-path friction to all reachable partners.</p>
+      <div class="formula">
+friction_per_state = max(1, 5 &times; infra_usage / infra)
+<span class="var">stl_bf_dist</span> = cumulative friction along shortest path
+<span class="var">stl_pw</span> = max(0, 100 &minus; <span class="var">stl_bf_dist</span>)  <span class="comment">// proximity weight</span>
+      </div>
+      <p class="note">BF distances are transient &mdash; computed fresh, used, then cleaned up.</p>
+    </div>
+
+    <div class="component model">
+      <h3>
+        B2: Accumulate WAS/WAD + Market Price Sums
+        <span class="tag tag-model">Model</span>
+        <span class="tag tag-file">stl_phase_b_generated.txt</span>
+      </h3>
+      <p>For each partner &times; each good, reads raw <code>buy_orders</code>, <code>sell_orders</code>, <code>production</code> from game state. Computes <strong>effective_surplus</strong> and accumulates gravity-weighted values.</p>
+      <div class="formula">
+<span class="comment">// Source price from partner's buy/sell ratio</span>
+<span class="var">source_price</span> = BASE &times; (1 + 0.75 &times; clamp((buy &minus; sell) / min(buy, sell), &plusmn;1))
+
+<span class="comment">// Production-weighted market price sums</span>
+<span class="var">wavg_psum</span> += partner_production &times; source_price
+<span class="var">wavg_wsum</span> += partner_production
+
+<span class="comment">// Effective surplus (using LAST month's market_price)</span>
+<span class="var">eff_surp</span> = max(buy, sell) &times; (<span class="var">market_price</span> &minus; <span class="var">source_price</span>) / <span class="var">market_price</span>
+
+<span class="comment">// If eff_surp &gt; 0: partner is CHEAP &rarr; WAS (import supply)</span>
+<span class="var">WAS</span>     += eff_surp &times; pw
+<span class="var">max_WAS</span> += eff_surp &times; 100
+
+<span class="comment">// If eff_surp &lt; 0: partner is EXPENSIVE &rarr; WAD (export demand)</span>
+<span class="var">WAD</span>     += |eff_surp| &times; pw
+<span class="var">max_WAD</span> += |eff_surp| &times; 100
+      </div>
+      <p class="note">No anti-oscillation subtraction &mdash; price mechanism + EMA smoothing provides natural damping.</p>
+    </div>
+
+    <div class="component model">
+      <h3>
+        B3: Finalize Prices + Origin Effective Surplus
+        <span class="tag tag-model">Model</span>
+        <span class="tag tag-file">stl_phase_b_generated.txt</span>
+      </h3>
+      <p>After partner loop completes for each origin state:</p>
+      <div class="formula">
+<span class="comment">// Add origin's OWN production to wavg sums</span>
+<span class="var">wavg_psum</span> += own_production &times; own_price
+<span class="var">wavg_wsum</span> += own_production
+
+<span class="comment">// Production-weighted market price</span>
+<span class="var">market_price</span> = <span class="var">wavg_psum</span> / <span class="var">wavg_wsum</span>
+
+<span class="comment">// Full effective surplus</span>
+<span class="var">full_eff</span> = max(own_buy, own_sell) &times; (<span class="var">market_price</span> &minus; own_price) / <span class="var">market_price</span>
+
+<span class="comment">// MARGINAL surplus: subtract existing trade from last month</span>
+<span class="comment">// Only the delta is passed to Phase C &mdash; system walks toward optimum</span>
+if full_eff &gt; 0: <span class="var">eff_export</span> = max(0, full_eff &minus; <span class="var">last_export</span>)
+if full_eff &lt; 0: <span class="var">eff_import</span> = max(0, |full_eff| &minus; <span class="var">last_import</span>)
+<span class="comment">// If marginal &le; 0: already at/past optimum &rarr; nothing written</span>
+      </div>
+      <div class="data-flow">
+        <h4>Outputs (stored per state per good)</h4>
+        <span class="data-item">stl_was_$g</span>
+        <span class="data-item">stl_wad_$g</span>
+        <span class="data-item">stl_max_was_$g</span>
+        <span class="data-item">stl_max_wad_$g</span>
+        <span class="data-item">stl_market_price_$g</span>
+        <span class="data-item">stl_eff_export_$g</span>
+        <span class="data-item">stl_eff_import_$g</span>
+      </div>
+    </div>
+
+    <p class="note">Orchestrated by <code>stl_gravity_calculation.txt</code> &mdash; batches 8 states/day &times; 13 days = 104 state capacity.</p>
+
+  </div>
+
+  <div class="arrow-container">
+    <svg width="40" height="32"><path d="M20 0 L20 20 L12 14 M20 20 L28 14" stroke="#888" stroke-width="2" fill="none"/></svg>
+  </div>
+
+  <!-- ========== PHASE C ========== -->
+  <div class="phase-header phase-c-header">
+    Phase C: Trade Amounts + Apply Modifiers
+    <span class="timing">Days 21&ndash;28</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="component model">
+      <h3>
+        C0: Clear Old Modifiers
+        <span class="tag tag-model">Model</span>
+        <span class="tag tag-file">stl_phase_c_effects.txt</span>
+      </h3>
+      <p>Removes previous month's export/import/transport modifiers from all depots. Old values stay active until this point.</p>
+    </div>
+
+    <div class="subpass-grid">
+
+      <div class="component model">
+        <div class="subpass">Sub-pass 3d: Exporters</div>
+        <h3>
+          Export Trade Amount
+          <span class="tag tag-model">Model</span>
+        </h3>
+        <div class="formula">
+<span class="comment">// Guard: eff_export &gt; 0 AND max_WAD &gt; 0</span>
+trade = min(<span class="var">eff_export</span>, max_WAD / 100)
+<span class="comment">// EMA: always 80/20 (new routes: 0.2 &times; signal)</span>
+trade = 0.2 &times; trade + 0.8 &times; old_export
+<span class="comment">// Rate cap: max 50% increase/cycle (floor 5)</span>
+trade = min(trade, old + max(old &times; 0.5, 5))
+<span class="comment">// Decay: if signal gone, 80%/cycle until &lt; 0.5</span>
+        </div>
+        <p class="note">eff_export is MARGINAL. Triple dampening: marginal + EMA + rate cap.</p>
+      </div>
+
+      <div class="component model">
+        <div class="subpass">Sub-pass 3d: Importers</div>
+        <h3>
+          Import Trade Amount
+          <span class="tag tag-model">Model</span>
+        </h3>
+        <div class="formula">
+<span class="comment">// Guard: eff_import &gt; 0 AND max_WAS &gt; 0</span>
+trade = <span class="var">eff_import</span>
+<span class="comment">// EMA: always 80/20 (new routes: 0.2 &times; signal)</span>
+trade = 0.2 &times; trade + 0.8 &times; old_import
+<span class="comment">// Rate cap: max 50% increase/cycle (floor 5)</span>
+trade = min(trade, old + max(old &times; 0.5, 5))
+<span class="comment">// Decay: if signal gone, 80%/cycle until &lt; 0.5</span>
+        </div>
+        <p class="note">Same triple dampening as exports. Conservation normalization balances total I/E.</p>
+      </div>
+
+    </div>
+
+    <div class="component model">
+      <div class="subpass">Sub-pass 3d.5</div>
+      <h3>
+        Conservation Normalization
+        <span class="tag tag-model">Model</span>
+      </h3>
+      <p>Scales the larger side (imports or exports) down to match the smaller side. Ensures sum(exports) = sum(imports) market-wide.</p>
+    </div>
+
+    <div class="component model">
+      <div class="subpass">Sub-pass 3d.75</div>
+      <h3>
+        Transport Cost (Importers)
+        <span class="tag tag-model">Model</span>
+      </h3>
+      <div class="formula">
+<span class="var">cost_factor</span> = clamp(<span class="var">max_WAS</span> / <span class="var">WAS</span>, 1, 10)
+<span class="comment">// Pure distance penalty: 100 / avg_proximity</span>
+<span class="comment">// Close sources &rarr; ~1, distant &rarr; up to 10</span>
+transport_amount = import_volume &times; cost_factor
+      </div>
+    </div>
+
+    <div class="component model">
+      <div class="subpass">Sub-pass 3e</div>
+      <h3>
+        Access % (GUI Display)
+        <span class="tag tag-model">Model</span>
+      </h3>
+      <div class="formula">
+export_access = last_export / <span class="var">eff_export</span> &times; 100
+import_access = last_import / <span class="var">eff_import</span> &times; 100
+      </div>
+    </div>
+
+    <div class="data-flow">
+      <h4>Final Outputs (applied to Trade Depot buildings)</h4>
+      <span class="data-item">stl_export_$GOODS$ modifier</span>
+      <span class="data-item">stl_import_$GOODS$ modifier</span>
+      <span class="data-item">stl_transport_$GOODS$ modifier</span>
+      <span class="data-item">stl_last_export_$GOODS$</span>
+      <span class="data-item">stl_last_import_$GOODS$</span>
+      <span class="data-item">stl_access_pct_*</span>
+    </div>
+
+  </div>
+
+  <!-- ========== TOOLTIP SECTION ========== -->
+  <div class="tooltip-section">
+    <div class="tooltip-header">
+      Tooltip System (On-Demand, Display Only)
+    </div>
+    <div class="phase-body" style="border-color: var(--tooltip-color);">
+
+      <p style="font-size: 0.9em; color: var(--muted); margin-bottom: 16px;">
+        Triggered on hover. Runs its own Bellman-Ford and computes effective_surplus per partner.
+        <strong>Does NOT affect the model or depot modifiers.</strong>
+        Reads <code>stl_market_price_$GOODS$</code> from Phase B.
+      </p>
+
+      <div class="subpass-grid">
+        <div class="component tooltip-only">
+          <h3>
+            Import Tooltip
+            <span class="tag tag-tooltip">Tooltip</span>
+            <span class="tag tag-file">stl_tooltip_effects.txt</span>
+          </h3>
+          <p><strong>stl_build_import_display</strong></p>
+          <ul>
+            <li>Runs BF from depot state</li>
+            <li>For each partner: computes source_price, economy_scale, effective_surplus</li>
+            <li>Filter: eff_surp &gt; 0 (cheap partners that can supply)</li>
+            <li>WV = eff_surp &times; proximity</li>
+            <li>Second pass: contribution %, qty, production-weighted avg price</li>
+          </ul>
+          <div class="data-flow">
+            <h4>Reads from Model</h4>
+            <span class="data-item">stl_market_price_$GOODS$</span>
+            <span class="data-item">stl_last_import_$GOODS$</span>
+          </div>
+        </div>
+
+        <div class="component tooltip-only">
+          <h3>
+            Export Tooltip
+            <span class="tag tag-tooltip">Tooltip</span>
+            <span class="tag tag-file">stl_tooltip_effects.txt</span>
+          </h3>
+          <p><strong>stl_build_export_display</strong></p>
+          <ul>
+            <li>Runs BF from depot state</li>
+            <li>For each partner: computes source_price, economy_scale, effective_surplus</li>
+            <li>Filter: eff_surp &lt; 0 (expensive partners that want imports)</li>
+            <li>WV = |eff_surp| &times; proximity</li>
+            <li>Second pass: contribution %, qty, production-weighted avg price</li>
+          </ul>
+          <div class="data-flow">
+            <h4>Reads from Model</h4>
+            <span class="data-item">stl_market_price_$GOODS$</span>
+            <span class="data-item">stl_last_export_$GOODS$</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="note" style="margin-top: 12px;">
+        Both tooltips compute their own BF distances (transient, cleaned up after).
+        The effective_surplus computation mirrors Phase B exactly, using the same formula and the stored market_price.
+        Display variables (stl_display_*) are stored on partner states for the GUI to read.
+      </p>
+    </div>
+  </div>
+
+  <!-- ========== KEY FORMULA SUMMARY ========== -->
+  <div style="margin-top: 32px;">
+    <div class="phase-header" style="background: var(--accent);">
+      Key Formula Summary
+    </div>
+    <div class="phase-body" style="border-color: var(--accent);">
+
+      <div class="formula" style="font-size: 0.9em;">
+<strong>Market Price</strong> (production-weighted network average):
+  <span class="var">market_price</span> = &Sigma;(<span class="var">production<sub>i</sub></span> &times; <span class="var">local_price<sub>i</sub></span>) / &Sigma;(<span class="var">production<sub>i</sub></span>)
+  <span class="comment">// summed over all reachable partners + self</span>
+  <span class="comment">// share<sub>i</sub> = production<sub>i</sub> / total_production (implicit)</span>
+
+<strong>Local Price</strong> (per state):
+  <span class="var">local_price</span> = BASE &times; (1 + 0.75 &times; clamp((buy &minus; sell) / min(buy, sell), &plusmn;1))
+  <span class="comment">// Consumption affects price via buy/sell ratio only</span>
+
+<strong>Effective Surplus</strong> (per partner, relative to origin's market_price):
+  <span class="var">eff_surp</span> = max(buy, sell) &times; (<span class="var">market_price</span> &minus; <span class="var">source_price</span>) / <span class="var">market_price</span>
+  <span class="comment">// Positive: partner is cheap (should export) &rarr; WAS</span>
+  <span class="comment">// Negative: partner is expensive (should import) &rarr; WAD</span>
+
+<strong>Origin Marginal Surplus</strong> (incremental trade signal):
+  <span class="var">full_eff</span> = max(own_buy, own_sell) &times; (<span class="var">market_price</span> &minus; <span class="var">own_price</span>) / <span class="var">market_price</span>
+  <span class="var">eff_export</span> = max(0, full_eff &minus; <span class="var">last_export</span>)  <span class="comment">// only the delta from current trade</span>
+  <span class="var">eff_import</span> = max(0, |full_eff| &minus; <span class="var">last_import</span>)
+  <span class="comment">// System walks toward revenue-maximizing volume incrementally</span>
+
+<strong>Gravity Weighting</strong>:
+  <span class="var">WAS</span> = &Sigma;(eff_surp &times; proximity_weight)     <span class="comment">// proximity = 100 - bf_dist</span>
+  <span class="var">WAD</span> = &Sigma;(|eff_surp| &times; proximity_weight)
+
+<strong>Transport Cost</strong> (pure distance factor):
+  <span class="var">cost_factor</span> = max_WAS / WAS = 100 / avg_proximity   <span class="comment">// clamped [1, 10]</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========== DATA FLOW DEPENDENCIES ========== -->
+  <div style="margin-top: 32px;">
+    <div class="phase-header" style="background: var(--border);">
+      Data Flow Dependencies
+    </div>
+    <div class="phase-body">
+      <table style="width: 100%; font-size: 0.85em; border-collapse: collapse;">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--border); text-align: left;">
+            <th style="padding: 6px 12px;">Variable</th>
+            <th style="padding: 6px 12px;">Written By</th>
+            <th style="padding: 6px 12px;">Read By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 6px 12px; font-family: monospace; color: #c792ea;">stl_market_price_$g</td>
+            <td style="padding: 6px 12px;">Phase B (finalize)</td>
+            <td style="padding: 6px 12px;">Phase B (next month eff_surp), Tooltip (both)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 6px 12px; font-family: monospace; color: #c792ea;">stl_eff_export/import_$g</td>
+            <td style="padding: 6px 12px;">Phase B (finalize)</td>
+            <td style="padding: 6px 12px;">Phase C (trade decisions + access %), GUI display</td>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 6px 12px; font-family: monospace; color: #c792ea;">stl_was/wad/max_$g</td>
+            <td style="padding: 6px 12px;">Phase B (accumulate)</td>
+            <td style="padding: 6px 12px;">Phase C (guards, transport cost, debug)</td>
+          </tr>
+          <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <td style="padding: 6px 12px; font-family: monospace; color: #c792ea;">stl_last_export/import_$g</td>
+            <td style="padding: 6px 12px;">Phase C</td>
+            <td style="padding: 6px 12px;">Phase B (marginal surplus), Phase C (EMA), Tooltip (qty display)</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 12px; font-family: monospace; color: #c792ea;">stl_bf_dist</td>
+            <td style="padding: 6px 12px;">BF algorithm (transient)</td>
+            <td style="padding: 6px 12px;">Phase B (pw), Tooltip (friction display)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

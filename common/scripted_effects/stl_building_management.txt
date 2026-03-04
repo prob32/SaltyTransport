@@ -1,0 +1,101 @@
+﻿# ========================================
+# TRADE DEPOT BUILDING MANAGEMENT
+# MAPI is zeroed via urban_planning technology modifier (instant)
+# Buildings created in common/history/buildings/stl_global.txt at game start
+# This effect handles: caching refs, applying modifiers, and mid-game safety net
+# ========================================
+
+# Ensure trade depot building exists, refresh cached ref, apply kill-all modifiers.
+# Always refreshes ref to prevent stale references from demolished/rebuilt buildings.
+# Scope: state
+stl_ensure_depot_exists = {
+	# Create building if it doesn't exist (mid-game safety net)
+	if = {
+		limit = {
+			NOT = {
+				any_scope_building = {
+					is_building_type = building_stl_trade_depot
+				}
+			}
+		}
+		create_building = {
+			building = building_stl_trade_depot
+			level = 1
+			reserves = 1
+			subsidized = yes
+		}
+	}
+	# Always refresh building reference (prevents stale refs from demolished buildings)
+	random_scope_building = {
+		limit = { is_building_type = building_stl_trade_depot }
+		prev = {
+			set_variable = { name = stl_trade_depot_ref value = prev }
+		}
+	}
+	# Apply kill-all modifiers if not already present
+	if = {
+		limit = {
+			has_variable = stl_trade_depot_ref
+		}
+		var:stl_trade_depot_ref = {
+			if = {
+				limit = { NOT = { has_modifier = stl_export_kill_all } }
+				add_modifier = { name = stl_export_kill_all days = -1 }
+			}
+			if = {
+				limit = { NOT = { has_modifier = stl_import_kill_all } }
+				add_modifier = { name = stl_import_kill_all days = -1 }
+			}
+		}
+	}
+}
+
+# Ensure exactly one port hub exists per market area
+# Variable flag on market owner prevents duplicate creation across months
+# Scope: country (market owner only)
+stl_ensure_port_hub_for_market = {
+	if = {
+		limit = {
+			this = market.owner
+			NOT = { has_variable = stl_port_hub_placed }
+			any_scope_state = {
+				has_port = yes
+			}
+		}
+		random_scope_state = {
+			limit = { has_port = yes }
+			create_building = {
+				building = building_stl_port_hub
+				level = 1
+				reserves = 1
+				subsidized = yes
+			}
+		}
+		set_variable = { name = stl_port_hub_placed value = 1 }
+	}
+}
+
+# Initialize depots across all states of a country
+# Scope: country
+stl_initialize_all_depots = {
+	# Initialize debug mode off by default (suppresses "never set" warning)
+	if = {
+		limit = { NOT = { has_global_variable = stl_debug_mode } }
+		set_global_variable = { name = stl_debug_mode value = 0 }
+	}
+
+	# Reset phase counters for the new monthly cycle (market owner only)
+	if = {
+		limit = { this = market.owner }
+		set_variable = { name = stl_bf_batch_counter value = 0 }
+		set_variable = { name = stl_phase_c_batch_idx value = 0 }
+	}
+
+	# Ensure depots exist in ALL states (including non-owner countries)
+	every_scope_state = {
+		stl_ensure_depot_exists = yes
+	}
+
+	# Ensure port hub in the world market hub state (one per market)
+	stl_ensure_port_hub_for_market = yes
+}

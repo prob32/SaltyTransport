@@ -1,0 +1,170 @@
+﻿# ========================================
+# BELLMAN-FORD INFRASTRUCTURE FRICTION PATHFINDING
+#
+# Computes shortest-path distances from a single origin state
+# to all other depot states, using infrastructure friction as
+# edge cost. States with spare infrastructure capacity (railways,
+# rivers, ports) are cheaper to route through.
+#
+# Friction per state = max(1, 5 x (infra_usage / infra))
+#   - Low ratio (spare capacity): friction ≈ 1
+#   - Fully used (ratio 1.0): friction = 5
+#   - Over-capacity: friction > 5
+#   - No infrastructure: friction = 10 (penalty)
+#
+# Weight = max(0, 100 - cumulative_friction)
+#
+# On-demand: runs during gravity calc and tooltip display.
+# No precomputation needed — infra ratios change monthly.
+#
+# Uses: while loop for relaxation passes
+#       every_scope_state + every_neighbouring_state for edge iteration
+#       save_scope_as for cross-scope references
+# ========================================
+
+# Run Bellman-Ford from current state, populating stl_bf_dist
+# on all reachable depot states in the same market.
+# After completion, each state's stl_bf_dist = minimum friction
+# path cost from origin. Call stl_cleanup_bf_dist when done.
+# Scope: state (the BF origin)
+stl_run_bellman_ford = {
+	save_scope_as = stl_bf_origin
+	owner = { save_scope_as = stl_bf_country }
+	owner = { market = { save_scope_as = stl_bf_market } }
+
+	# Initialize: origin = 0
+	set_variable = { name = stl_bf_dist value = 0 }
+
+	# Initialize: all other depot states in the MARKET = 999 (unreachable)
+	scope:stl_bf_market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					NOT = { this = scope:stl_bf_origin }
+				}
+				set_variable = { name = stl_bf_dist value = 999 }
+			}
+		}
+	}
+
+	# ===== RELAXATION PASSES (7 passes for up to 7-hop paths) =====
+	set_local_variable = { name = stl_bf_pass value = 0 }
+
+	while = {
+		limit = {
+			NOT = { local_var:stl_bf_pass >= 7 }
+		}
+
+		change_local_variable = { name = stl_bf_pass add = 1 }
+
+		# For each state S in the market, relax edges to all neighbors N
+		scope:stl_bf_market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						has_variable = stl_trade_depot_ref
+						has_variable = stl_bf_dist
+						NOT = { var:stl_bf_dist >= 999 }
+					}
+
+					every_neighbouring_state = {
+						limit = {
+							has_variable = stl_trade_depot_ref
+							has_variable = stl_bf_dist
+							owner = { market = { this = scope:stl_bf_market } }
+						}
+
+					# Compute friction for entering this neighbor
+					# friction = max(1, 5 x (infra_usage / infra))
+					if = {
+						limit = { infrastructure >= 1 }
+						set_local_variable = {
+							name = stl_bf_friction
+							value = {
+								value = infrastructure_usage
+								divide = infrastructure
+								multiply = 5
+							}
+						}
+						# Floor at 1
+						if = {
+							limit = { NOT = { local_var:stl_bf_friction >= 1 } }
+							set_local_variable = { name = stl_bf_friction value = 1 }
+						}
+					}
+					# No infrastructure: penalty friction
+					if = {
+						limit = { NOT = { infrastructure >= 1 } }
+						set_local_variable = { name = stl_bf_friction value = 10 }
+					}
+
+					# new_dist = S.dist + friction(N)
+					# prev = S (from every_scope_state), this = N (neighbor)
+					set_local_variable = {
+						name = stl_bf_new_dist
+						value = {
+							value = prev.var:stl_bf_dist
+							add = local_var:stl_bf_friction
+						}
+					}
+
+					# Relax: if new_dist < current dist, update
+					if = {
+						limit = {
+							local_var:stl_bf_new_dist < var:stl_bf_dist
+						}
+						set_variable = { name = stl_bf_dist value = local_var:stl_bf_new_dist }
+					}
+					}
+				}
+			}
+		}
+	}
+
+	# ===== COUNT REACHABLE PARTNERS =====
+	# States with stl_bf_dist < 100 (positive weight) and not self
+	set_variable = { name = stl_partner_count value = 0 }
+	scope:stl_bf_market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					has_variable = stl_bf_dist
+					NOT = { this = scope:stl_bf_origin }
+					NOT = { var:stl_bf_dist >= 100 }
+				}
+				scope:stl_bf_origin = {
+					change_variable = { name = stl_partner_count add = 1 }
+				}
+			}
+		}
+	}
+
+	clear_saved_scope = stl_bf_origin
+	clear_saved_scope = stl_bf_country
+	clear_saved_scope = stl_bf_market
+}
+
+# Remove stl_bf_dist from all market depot states after use.
+# Must be called after stl_run_bellman_ford when done reading distances.
+# Scope: state (same state that called stl_run_bellman_ford)
+stl_cleanup_bf_dist = {
+	# Clean self
+	if = { limit = { has_variable = stl_bf_dist } remove_variable = stl_bf_dist }
+
+	# Clean all market depot states (BF crosses country boundaries)
+	owner = {
+		market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						has_variable = stl_trade_depot_ref
+						has_variable = stl_bf_dist
+					}
+					remove_variable = stl_bf_dist
+				}
+			}
+		}
+	}
+}

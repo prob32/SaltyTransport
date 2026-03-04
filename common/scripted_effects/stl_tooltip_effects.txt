@@ -1,0 +1,551 @@
+﻿# ========================================
+# SALTY TRANSPORT - Tooltip Display List Effects
+#
+# Called by scripted_guis on tooltip _show/_hide states.
+# Builds a flat display list on depot state so the GUI
+# can iterate it with dynamicgridbox + GetList().
+#
+# Infrastructure friction model: runs Bellman-Ford on-demand,
+# iterates all reachable states with positive weight.
+# Each partner gets: friction distance, weight, WV, contribution %
+# Single flat list stl_display_partners (no tier grouping)
+#
+# Pattern: save_scope_as → every_scope_state → add_to_variable_list
+# GUI reads via MakeScope.GetList('stl_display_partners')
+# ========================================
+
+# Build display list for IMPORT tooltip (Weighted Accessible Supply)
+# Shows which partner states are cheap (they can supply us)
+# Uses effective_surplus: max(buy,sell) x (market - source) / market
+# Partners with positive effective_surplus are cheap and contribute to WAS.
+# Scope: depot state
+stl_build_import_display = {
+	save_scope_as = stl_depot_state
+
+	# Clear previous display data
+	stl_clear_display_lists = yes
+
+	# Initialize aggregates
+	set_variable = { name = stl_display_total_wv value = 0 }
+	set_variable = { name = stl_display_partner_count value = 0 }
+	set_variable = { name = stl_display_is_import value = 1 }
+
+	# Run Bellman-Ford from this state
+	stl_run_bellman_ford = yes
+
+	# Iterate all reachable depot states in the market
+	owner = {
+		market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						has_variable = stl_trade_depot_ref
+						has_variable = stl_bf_dist
+						NOT = { this = scope:stl_depot_state }
+						NOT = { var:stl_bf_dist >= 100 }
+					}
+
+			# Compute weight from BF friction distance
+			set_local_variable = {
+				name = pw
+				value = {
+					value = 100
+					subtract = var:stl_bf_dist
+				}
+			}
+			if = {
+				limit = { NOT = { local_var:pw >= 0 } }
+				set_local_variable = { name = pw value = 0 }
+			}
+
+			# Compute source price
+			# price = BASE x (1 + 0.75 x clamp((buy - sell) / min(buy, sell), +/-1))
+			set_local_variable = { name = stl_local_buy value = { value = sg:$GOODS$.state_goods_consumption } }
+			set_local_variable = { name = stl_local_sell value = { value = sg:$GOODS$.state_goods_production } }
+			set_local_variable = { name = stl_partner_price value = $BASE$ }
+			set_local_variable = { name = stl_min_bs value = local_var:stl_local_buy }
+			if = {
+				limit = { NOT = { local_var:stl_local_sell >= local_var:stl_local_buy } }
+				set_local_variable = { name = stl_min_bs value = local_var:stl_local_sell }
+			}
+			if = {
+				limit = { local_var:stl_min_bs > 0.01 }
+				set_local_variable = {
+					name = stl_price_ratio
+					value = {
+						value = local_var:stl_local_buy
+						subtract = local_var:stl_local_sell
+						divide = local_var:stl_min_bs
+					}
+				}
+				if = { limit = { local_var:stl_price_ratio > 1 } set_local_variable = { name = stl_price_ratio value = 1 } }
+				if = { limit = { NOT = { local_var:stl_price_ratio >= -1 } } set_local_variable = { name = stl_price_ratio value = -1 } }
+				set_local_variable = {
+					name = stl_partner_price
+					value = {
+						value = local_var:stl_price_ratio
+						multiply = 0.75
+						add = 1
+						multiply = $BASE$
+					}
+				}
+			}
+			set_variable = { name = stl_display_source_price value = local_var:stl_partner_price }
+
+			# Compute effective_surplus for this partner
+			# economy_scale = max(buy, sell)
+			set_local_variable = { name = stl_econ_scale value = local_var:stl_local_buy }
+			if = {
+				limit = { local_var:stl_local_sell > local_var:stl_local_buy }
+				set_local_variable = { name = stl_econ_scale value = local_var:stl_local_sell }
+			}
+
+			# eff_surp = econ_scale x (market - source) / market
+			# Positive = cheap partner (good import source)
+			set_variable = { name = stl_display_wv value = 0 }
+			if = {
+				limit = {
+					local_var:stl_econ_scale > 0.01
+					scope:stl_depot_state = { has_variable = stl_market_price_$GOODS$ var:stl_market_price_$GOODS$ > 0.01 }
+				}
+				set_local_variable = {
+					name = stl_eff_surp
+					value = {
+						value = scope:stl_depot_state.var:stl_market_price_$GOODS$
+						subtract = local_var:stl_partner_price
+						divide = scope:stl_depot_state.var:stl_market_price_$GOODS$
+						multiply = local_var:stl_econ_scale
+					}
+				}
+				if = {
+					limit = { local_var:stl_eff_surp > 0 }
+					# WV = eff_surp x proximity (matches Phase B model)
+					set_variable = {
+						name = stl_display_wv
+						value = {
+							value = local_var:stl_eff_surp
+							multiply = local_var:pw
+						}
+					}
+				}
+			}
+
+			set_variable = { name = stl_display_friction value = var:stl_bf_dist }
+			set_variable = { name = stl_display_weight value = local_var:pw }
+			set_variable = { name = stl_display_has_rail value = 0 }
+			if = { limit = { has_building = building_railway } set_variable = { name = stl_display_has_rail value = 1 } }
+			set_variable = { name = stl_display_has_river value = 0 }
+			if = { limit = { stl_has_river = yes } set_variable = { name = stl_display_has_river value = 1 } }
+
+			# Only add to display list if WV > 0 (cheap partners only)
+			if = {
+				limit = { var:stl_display_wv > 0.01 }
+				scope:stl_depot_state = {
+					add_to_variable_list = { name = stl_display_partners target = prev }
+					change_variable = { name = stl_display_total_wv add = prev.var:stl_display_wv }
+					change_variable = { name = stl_display_partner_count add = 1 }
+				}
+			}
+				}
+			}
+		}
+	}
+
+	# Clean up BF distances
+	stl_cleanup_bf_dist = yes
+
+	# --- Second pass: compute contribution %, qty, source price, transport ---
+	# Also accumulates weighted average price for main panel Market Price column
+	# Safety: ensure import total variable exists (may not if Phase C hasn't run for this good)
+	if = { limit = { NOT = { has_variable = stl_last_import_$GOODS$ } } set_variable = { name = stl_last_import_$GOODS$ value = 0 } }
+	set_variable = { name = stl_display_weighted_price_sum value = 0 }
+	set_variable = { name = stl_display_weighted_qty_sum value = 0 }
+	set_variable = { name = stl_display_transport_sum value = 0 }
+	if = {
+		limit = {
+			has_variable_list = stl_display_partners
+			var:stl_display_total_wv > 0.01
+		}
+		every_in_list = {
+			variable = stl_display_partners
+			set_variable = {
+				name = stl_display_contribution_pct
+				value = {
+					value = var:stl_display_wv
+					divide = scope:stl_depot_state.var:stl_display_total_wv
+					multiply = 100
+				}
+			}
+			# Contribution quantity = share × depot's total import
+			set_variable = {
+				name = stl_display_contribution_qty
+				value = {
+					value = var:stl_display_contribution_pct
+					divide = 100
+					multiply = scope:stl_depot_state.var:stl_last_import_$GOODS$
+				}
+			}
+			# Source price = estimated local price from production/consumption
+			# price = BASE × (1 + PRICE_RANGE × clamp((buy - sell) / min(buy, sell), ±1))
+			set_local_variable = {
+				name = stl_local_buy
+				value = { value = sg:$GOODS$.state_goods_consumption }
+			}
+			set_local_variable = {
+				name = stl_local_sell
+				value = { value = sg:$GOODS$.state_goods_production }
+			}
+			set_local_variable = { name = stl_partner_price value = $BASE$ }
+			set_local_variable = { name = stl_min_bs value = local_var:stl_local_buy }
+			if = {
+				limit = { NOT = { local_var:stl_local_sell >= local_var:stl_local_buy } }
+				set_local_variable = { name = stl_min_bs value = local_var:stl_local_sell }
+			}
+			if = {
+				limit = { local_var:stl_min_bs > 0.01 }
+				set_local_variable = {
+					name = stl_price_ratio
+					value = {
+						value = local_var:stl_local_buy
+						subtract = local_var:stl_local_sell
+						divide = local_var:stl_min_bs
+					}
+				}
+				if = { limit = { local_var:stl_price_ratio > 1 } set_local_variable = { name = stl_price_ratio value = 1 } }
+				if = { limit = { NOT = { local_var:stl_price_ratio >= -1 } } set_local_variable = { name = stl_price_ratio value = -1 } }
+				set_local_variable = {
+					name = stl_partner_price
+					value = {
+						value = local_var:stl_price_ratio
+						multiply = 0.75
+						add = 1
+						multiply = $BASE$
+					}
+				}
+			}
+			set_variable = { name = stl_display_source_price value = local_var:stl_partner_price }
+			# Transport per partner = (Qty × Proximity) / TradedQty
+			# Dividing by traded_quantity normalizes for goods that trade in larger lots
+			set_variable = {
+				name = stl_display_transport
+				value = {
+					value = var:stl_display_contribution_qty
+					multiply = var:stl_display_friction
+					divide = $TQ$
+				}
+			}
+			# Accumulate for weighted avg price: sum(weight x price) / sum(weight)
+			# Weight = production (matches Phase B production-weighted model)
+			# High-production partners dominate the average.
+			set_local_variable = {
+				name = stl_prox_weight
+				value = { value = sg:$GOODS$.state_goods_production }
+			}
+			set_local_variable = {
+				name = stl_temp_weighted
+				value = {
+					value = local_var:stl_prox_weight
+					multiply = var:stl_display_source_price
+				}
+			}
+			scope:stl_depot_state = {
+				change_variable = { name = stl_display_weighted_price_sum add = local_var:stl_temp_weighted }
+				change_variable = { name = stl_display_weighted_qty_sum add = local_var:stl_prox_weight }
+				change_variable = { name = stl_display_transport_sum add = prev.var:stl_display_transport }
+			}
+		}
+	}
+
+	# Store weighted average market price on depot state (persists for main panel + Phase C profit gate)
+	# weighted_avg = sum((surplus/friction) × price) / sum(surplus/friction)
+	if = {
+		limit = { var:stl_display_weighted_qty_sum > 0.01 }
+		set_variable = {
+			name = stl_weighted_avg_price_$GOODS$
+			value = {
+				value = var:stl_display_weighted_price_sum
+				divide = var:stl_display_weighted_qty_sum
+			}
+		}
+	}
+	# Store transport sum for main panel Transport column (TQ-adjusted)
+	set_variable = { name = stl_transport_$GOODS$ value = var:stl_display_transport_sum }
+	# Clean up temp aggregation vars
+	remove_variable = stl_display_weighted_price_sum
+	remove_variable = stl_display_weighted_qty_sum
+	remove_variable = stl_display_transport_sum
+
+	clear_saved_scope = stl_depot_state
+}
+
+# Build display list for EXPORT tooltip (Weighted Accessible Demand)
+# Shows which partner states are expensive (they want to import from us)
+# Uses effective_surplus: max(buy,sell) x (market - source) / market
+# Partners with negative effective_surplus are expensive and contribute to WAD.
+# Scope: depot state
+stl_build_export_display = {
+	save_scope_as = stl_depot_state
+
+	stl_clear_display_lists = yes
+
+	set_variable = { name = stl_display_total_wv value = 0 }
+	set_variable = { name = stl_display_partner_count value = 0 }
+	set_variable = { name = stl_display_is_import value = 0 }
+	set_variable = { name = stl_display_weighted_price_sum value = 0 }
+	set_variable = { name = stl_display_weighted_qty_sum value = 0 }
+
+	# Run Bellman-Ford from this state
+	stl_run_bellman_ford = yes
+
+	# Iterate all reachable depot states in the market
+	owner = {
+		market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						has_variable = stl_trade_depot_ref
+						has_variable = stl_bf_dist
+						NOT = { this = scope:stl_depot_state }
+						NOT = { var:stl_bf_dist >= 100 }
+					}
+
+			# Compute weight from BF friction distance
+			set_local_variable = {
+				name = pw
+				value = {
+					value = 100
+					subtract = var:stl_bf_dist
+				}
+			}
+			if = {
+				limit = { NOT = { local_var:pw >= 0 } }
+				set_local_variable = { name = pw value = 0 }
+			}
+
+			# Compute source price for this partner
+			set_local_variable = { name = stl_local_buy value = { value = sg:$GOODS$.state_goods_consumption } }
+			set_local_variable = { name = stl_local_sell value = { value = sg:$GOODS$.state_goods_production } }
+			set_local_variable = { name = stl_partner_price value = $BASE$ }
+			set_local_variable = { name = stl_min_bs value = local_var:stl_local_buy }
+			if = {
+				limit = { NOT = { local_var:stl_local_sell >= local_var:stl_local_buy } }
+				set_local_variable = { name = stl_min_bs value = local_var:stl_local_sell }
+			}
+			if = {
+				limit = { local_var:stl_min_bs > 0.01 }
+				set_local_variable = {
+					name = stl_price_ratio
+					value = {
+						value = local_var:stl_local_buy
+						subtract = local_var:stl_local_sell
+						divide = local_var:stl_min_bs
+					}
+				}
+				if = { limit = { local_var:stl_price_ratio > 1 } set_local_variable = { name = stl_price_ratio value = 1 } }
+				if = { limit = { NOT = { local_var:stl_price_ratio >= -1 } } set_local_variable = { name = stl_price_ratio value = -1 } }
+				set_local_variable = {
+					name = stl_partner_price
+					value = {
+						value = local_var:stl_price_ratio
+						multiply = 0.75
+						add = 1
+						multiply = $BASE$
+					}
+				}
+			}
+
+			# Compute effective_surplus for this partner
+			# economy_scale = max(buy, sell)
+			set_local_variable = { name = stl_econ_scale value = local_var:stl_local_buy }
+			if = {
+				limit = { local_var:stl_local_sell > local_var:stl_local_buy }
+				set_local_variable = { name = stl_econ_scale value = local_var:stl_local_sell }
+			}
+
+			# eff_surp = econ_scale x (market - source) / market
+			# Negative = expensive partner (wants to import = demand for our exports)
+			set_variable = { name = stl_display_wv value = 0 }
+			if = {
+				limit = {
+					local_var:stl_econ_scale > 0.01
+					scope:stl_depot_state = { has_variable = stl_market_price_$GOODS$ var:stl_market_price_$GOODS$ > 0.01 }
+				}
+				set_local_variable = {
+					name = stl_eff_surp
+					value = {
+						value = scope:stl_depot_state.var:stl_market_price_$GOODS$
+						subtract = local_var:stl_partner_price
+						divide = scope:stl_depot_state.var:stl_market_price_$GOODS$
+						multiply = local_var:stl_econ_scale
+					}
+				}
+				if = {
+					limit = { NOT = { local_var:stl_eff_surp >= 0 } }
+					# WV = |eff_surp| x proximity (matches Phase B model)
+					set_local_variable = { name = stl_neg_eff value = { value = 0 subtract = local_var:stl_eff_surp } }
+					set_variable = {
+						name = stl_display_wv
+						value = {
+							value = local_var:stl_neg_eff
+							multiply = local_var:pw
+						}
+					}
+				}
+			}
+
+			set_variable = { name = stl_display_source_price value = local_var:stl_partner_price }
+			set_variable = { name = stl_display_friction value = var:stl_bf_dist }
+			set_variable = { name = stl_display_weight value = local_var:pw }
+			set_variable = { name = stl_display_has_rail value = 0 }
+			if = { limit = { has_building = building_railway } set_variable = { name = stl_display_has_rail value = 1 } }
+			set_variable = { name = stl_display_has_river value = 0 }
+			if = { limit = { stl_has_river = yes } set_variable = { name = stl_display_has_river value = 1 } }
+
+			# Only add to display list if WV > 0 (expensive partners only)
+			if = {
+				limit = { var:stl_display_wv > 0.01 }
+				scope:stl_depot_state = {
+					add_to_variable_list = { name = stl_display_partners target = prev }
+					change_variable = { name = stl_display_total_wv add = prev.var:stl_display_wv }
+					change_variable = { name = stl_display_partner_count add = 1 }
+				}
+			}
+				}
+			}
+		}
+	}
+
+	# Clean up BF distances
+	stl_cleanup_bf_dist = yes
+
+	# --- Second pass: compute contribution %, qty, and source price ---
+	# Safety: ensure export total variable exists (may not if Phase C hasn't run for this good)
+	if = { limit = { NOT = { has_variable = stl_last_export_$GOODS$ } } set_variable = { name = stl_last_export_$GOODS$ value = 0 } }
+	if = {
+		limit = {
+			has_variable_list = stl_display_partners
+			var:stl_display_total_wv > 0.01
+		}
+		every_in_list = {
+			variable = stl_display_partners
+			set_variable = {
+				name = stl_display_contribution_pct
+				value = {
+					value = var:stl_display_wv
+					divide = scope:stl_depot_state.var:stl_display_total_wv
+					multiply = 100
+				}
+			}
+			# Contribution quantity = share × depot's total export
+			set_variable = {
+				name = stl_display_contribution_qty
+				value = {
+					value = var:stl_display_contribution_pct
+					divide = 100
+					multiply = scope:stl_depot_state.var:stl_last_export_$GOODS$
+				}
+			}
+			# Source price = estimated local price from production/consumption
+			# price = BASE × (1 + PRICE_RANGE × clamp((buy - sell) / min(buy, sell), ±1))
+			set_local_variable = {
+				name = stl_local_buy
+				value = { value = sg:$GOODS$.state_goods_consumption }
+			}
+			set_local_variable = {
+				name = stl_local_sell
+				value = { value = sg:$GOODS$.state_goods_production }
+			}
+			set_local_variable = { name = stl_partner_price value = $BASE$ }
+			set_local_variable = { name = stl_min_bs value = local_var:stl_local_buy }
+			if = {
+				limit = { NOT = { local_var:stl_local_sell >= local_var:stl_local_buy } }
+				set_local_variable = { name = stl_min_bs value = local_var:stl_local_sell }
+			}
+			if = {
+				limit = { local_var:stl_min_bs > 0.01 }
+				set_local_variable = {
+					name = stl_price_ratio
+					value = {
+						value = local_var:stl_local_buy
+						subtract = local_var:stl_local_sell
+						divide = local_var:stl_min_bs
+					}
+				}
+				if = { limit = { local_var:stl_price_ratio > 1 } set_local_variable = { name = stl_price_ratio value = 1 } }
+				if = { limit = { NOT = { local_var:stl_price_ratio >= -1 } } set_local_variable = { name = stl_price_ratio value = -1 } }
+				set_local_variable = {
+					name = stl_partner_price
+					value = {
+						value = local_var:stl_price_ratio
+						multiply = 0.75
+						add = 1
+						multiply = $BASE$
+					}
+				}
+			}
+			set_variable = { name = stl_display_source_price value = local_var:stl_partner_price }
+			# No transport for exports (removed per plan)
+			set_variable = { name = stl_display_transport value = 0 }
+			# Accumulate for weighted avg price: sum(weight x price) / sum(weight)
+			# Weight = production (matches Phase B production-weighted model)
+			# High-production partners dominate the average.
+			set_local_variable = {
+				name = stl_prox_weight
+				value = { value = sg:$GOODS$.state_goods_production }
+			}
+			set_local_variable = {
+				name = stl_temp_weighted
+				value = {
+					value = local_var:stl_prox_weight
+					multiply = var:stl_display_source_price
+				}
+			}
+			scope:stl_depot_state = {
+				change_variable = { name = stl_display_weighted_price_sum add = local_var:stl_temp_weighted }
+				change_variable = { name = stl_display_weighted_qty_sum add = local_var:stl_prox_weight }
+			}
+		}
+	}
+
+	# Store weighted average market price for exports on depot state (persists for main panel)
+	# weighted_avg = sum((deficit/friction) × price) / sum(deficit/friction)
+	if = {
+		limit = { var:stl_display_weighted_qty_sum > 0.01 }
+		set_variable = {
+			name = stl_weighted_avg_price_export_$GOODS$
+			value = {
+				value = var:stl_display_weighted_price_sum
+				divide = var:stl_display_weighted_qty_sum
+			}
+		}
+	}
+	# Clean up temp aggregation vars
+	remove_variable = stl_display_weighted_price_sum
+	remove_variable = stl_display_weighted_qty_sum
+
+	clear_saved_scope = stl_depot_state
+}
+
+# Clear all display lists and variables
+# Scope: depot state
+stl_clear_display_lists = {
+	# NOTE: stl_display_good_idx is NOT cleared here — it is set AFTER
+	# the build call in the scripted_gui so it persists for GUI reads.
+	if = {
+		limit = { has_variable_list = stl_display_partners }
+		# Clean up per-partner variables before clearing list
+		every_in_list = {
+			variable = stl_display_partners
+			if = { limit = { has_variable = stl_display_wv } remove_variable = stl_display_wv }
+			if = { limit = { has_variable = stl_display_friction } remove_variable = stl_display_friction }
+			if = { limit = { has_variable = stl_display_weight } remove_variable = stl_display_weight }
+			if = { limit = { has_variable = stl_display_contribution_pct } remove_variable = stl_display_contribution_pct }
+			if = { limit = { has_variable = stl_display_contribution_qty } remove_variable = stl_display_contribution_qty }
+			if = { limit = { has_variable = stl_display_source_price } remove_variable = stl_display_source_price }
+			if = { limit = { has_variable = stl_display_transport } remove_variable = stl_display_transport }
+			if = { limit = { has_variable = stl_display_has_rail } remove_variable = stl_display_has_rail }
+			if = { limit = { has_variable = stl_display_has_river } remove_variable = stl_display_has_river }
+		}
+		clear_variable_list = stl_display_partners
+	}
+}

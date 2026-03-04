@@ -1,0 +1,34 @@
+﻿# ========================================
+# SALTY TRANSPORT SCRIPT VALUES
+# Used as multiplier targets in add_modifier
+# Pattern from ASE: local_var set in effect → script_value reads it → multiplier = script_value_name
+# ========================================
+
+# Trade amount computed per-state in stl_distribute_good
+# Represents the proportional share of goods this state trades
+# Floor at 0 — zero-sum requires exact math, no artificial minimum
+stl_trade_multiplier = {
+	value = local_var:stl_trade_amount
+	min = 0
+}
+
+# Debug: base trade amount (surplus for exporters, deficit for importers)
+stl_debug_base_multiplier = {
+	value = local_var:stl_debug_base
+	min = 0
+}
+
+# Debug: gravity accessibility weight (WAD or WAS, ÷100)
+stl_debug_access_multiplier = {
+	value = local_var:stl_debug_access
+	min = 0
+}
+
+# Transport cost amount per imported good, scaled by distance
+# distance_factor = max_WAS / WAS = 1/access_fraction
+# Close trade (access ≈ 1) → factor ≈ 1 → low cost
+# Distant trade (access ≈ 0.1) → factor ≈ 10 → high cost
+stl_transport_multiplier = {
+	value = local_var:stl_transport_amount
+	min = 0
+}

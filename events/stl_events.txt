@@ -1,0 +1,43 @@
+﻿namespace = stl_events
+
+# Event 1: Initialization - creates depots, zeros MAPI, resets phase counters
+# Fires on game start (day 1) and monthly as a safety net
+# Scope: country
+stl_events.1 = {
+	type = country_event
+	hidden = yes
+
+	immediate = {
+		stl_initialize_all_depots = yes
+	}
+}
+
+# Event 3: Phase B — Bellman-Ford precomputation + WAS/WAD accumulation
+# Fires days 8-20 (state BF batches, ~8 states/day)
+# Scope: country (market owner only)
+stl_events.3 = {
+	type = country_event
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = { this = market.owner }
+			stl_phase_b_run = yes
+		}
+	}
+}
+
+# Event 4: Phase C — Normalize + apply modifiers
+# Fires days 21-28 (goods batches, ~6 goods/day)
+# Scope: country (market owner only)
+stl_events.4 = {
+	type = country_event
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = { this = market.owner }
+			stl_phase_c_batch = yes
+		}
+	}
+}

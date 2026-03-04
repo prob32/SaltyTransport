@@ -1,0 +1,79 @@
+﻿# Debug mode check
+# Enable:  effect set_global_variable = { name = stl_debug_mode value = 1 }
+# Disable: effect set_global_variable = { name = stl_debug_mode value = 0 }
+stl_is_debug_mode = {
+	global_var:stl_debug_mode >= 1
+}
+
+# State has railway connection for inter-state trade
+stl_state_has_trade_connection = {
+	has_building = building_railway
+}
+
+# State has a navigable river, delta, or lake trait
+# Rivers provide the best decay factor (0.85) for diffusion access propagation
+stl_has_river = {
+	OR = {
+		# Western Europe
+		has_state_trait = state_trait_rhine_river
+		has_state_trait = state_trait_elbe_river
+		has_state_trait = state_trait_oder_river
+		has_state_trait = state_trait_rhone_river
+		has_state_trait = state_trait_loire_river
+		has_state_trait = state_trait_seine_river
+		has_state_trait = state_trait_po_river
+		has_state_trait = state_trait_douro_river
+		has_state_trait = state_trait_tagus_river
+		# Eastern Europe
+		has_state_trait = state_trait_drava_river
+		has_state_trait = state_trait_danube_river
+		has_state_trait = state_trait_volga_river
+		has_state_trait = state_trait_dnieper_river
+		has_state_trait = state_trait_don_river
+		has_state_trait = state_trait_irtysh_river
+		# Near East / Central Asia
+		has_state_trait = state_trait_tigris_river
+		has_state_trait = state_trait_euphrates_river
+		has_state_trait = state_trait_ob_river
+		# North America
+		has_state_trait = state_trait_st_lawrence_river
+		has_state_trait = state_trait_mississippi_river
+		has_state_trait = state_trait_ohio_river
+		has_state_trait = state_trait_columbia_river
+		has_state_trait = state_trait_rio_grande_river
+		has_state_trait = state_trait_great_lakes
+		has_state_trait = state_trait_yukon_river_salmon_run
+		# South America
+		has_state_trait = state_trait_orinoco_river
+		has_state_trait = state_trait_uruguay_river
+		has_state_trait = state_trait_parana_river
+		has_state_trait = state_trait_paraguay_river
+		has_state_trait = state_trait_amazon_river
+		has_state_trait = state_trait_lake_maracaibo
+		# Africa
+		has_state_trait = state_trait_nile_river
+		has_state_trait = state_trait_congo_river
+		has_state_trait = state_trait_niger_river
+		has_state_trait = state_trait_lake_victoria
+		has_state_trait = state_trait_zambezi_river
+		# India
+		has_state_trait = state_trait_indus_river
+		has_state_trait = state_trait_ganges_river
+		has_state_trait = state_trait_bengal_delta
+		has_state_trait = state_trait_cauvery_delta
+		has_state_trait = state_trait_brahmaputra_river
+		# Southeast Asia
+		has_state_trait = state_trait_irrwaddy_delta
+		has_state_trait = state_trait_mekong_delta
+		has_state_trait = state_trait_chao_phraya_delta
+		has_state_trait = state_trait_mekong_river
+		has_state_trait = state_trait_kapuas_river
+		has_state_trait = state_trait_sarawak_river
+		# East Asia / Siberia
+		has_state_trait = state_trait_pearl_river
+		has_state_trait = state_trait_yangtze_river
+		has_state_trait = state_trait_yellow_river
+		has_state_trait = state_trait_angara_river
+		has_state_trait = state_trait_yenisei_river
+	}
+}

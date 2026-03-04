@@ -1,0 +1,130 @@
+﻿# ========================================
+# PHASE B: BELLMAN-FORD PRECOMPUTATION + WAS/WAD ACCUMULATION
+#
+# Part of the two-phase monthly distribution cycle:
+#   Phase B (days 8-20): BF + marginal effective surplus WAS/WAD + market price
+#   Phase C (days 21-28): EMA smoothing (80/20) + normalize + apply modifiers
+#
+# KEY OPTIMIZATION: Loop inversion.
+# Old: for each good (49) → for each state → run BF = 49N BF runs
+# New: for each state → run BF once → accumulate for all 49 goods = N BF runs
+# Result: 49x reduction in Bellman-Ford work.
+#
+# State batching: 8 states per day × 13 days = 104 state capacity.
+# Countries with more states: excess falls back to uniform in Phase C.
+#
+# Infrastructure friction model (unchanged):
+#   Friction per state = max(1, 5 × (infra_usage / infra))
+#   Weight = max(0, 100 - cumulative_friction)
+# ========================================
+
+# Phase B batch runner — processes up to 8 depot states per call
+# Scope: country
+stl_phase_b_run = {
+	# Initialize counter if missing
+	if = {
+		limit = { NOT = { has_variable = stl_bf_batch_counter } }
+		set_variable = { name = stl_bf_batch_counter value = 0 }
+	}
+
+	# Compute batch bounds: process states [start, end)
+	set_local_variable = {
+		name = stl_batch_start
+		value = {
+			value = var:stl_bf_batch_counter
+			multiply = 8
+		}
+	}
+	set_local_variable = {
+		name = stl_batch_end
+		value = {
+			value = local_var:stl_batch_start
+			add = 8
+		}
+	}
+
+	# Position counter — tracks which state we're on
+	set_local_variable = { name = stl_state_idx value = 0 }
+
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = {
+					has_variable = stl_trade_depot_ref
+					has_building = building_stl_trade_depot
+				}
+
+				# Only process states in the current batch window
+				if = {
+					limit = {
+						local_var:stl_state_idx >= local_var:stl_batch_start
+						NOT = { local_var:stl_state_idx >= local_var:stl_batch_end }
+					}
+					stl_phase_b_process_state = yes
+				}
+
+				# Increment for ALL states (not just processed ones) to track position
+				change_local_variable = { name = stl_state_idx add = 1 }
+			}
+		}
+	}
+
+	# Advance batch counter
+	change_variable = { name = stl_bf_batch_counter add = 1 }
+}
+
+# Process a single state through Phase B: BF once, accumulate WAS/WAD for all 49 goods
+# Scope: state
+stl_phase_b_process_state = {
+	save_scope_as = stl_gravity_self
+
+	# Zero WAS/WAD for all 49 goods on this state (generated effect)
+	stl_phase_b_zero_was_wad = yes
+
+	# Run Bellman-Ford ONCE from this state
+	stl_run_bellman_ford = yes
+
+	# Iterate all reachable partner states in the market, accumulate WAS/WAD
+	owner = {
+		market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						has_variable = stl_trade_depot_ref
+						has_building = building_stl_trade_depot
+						has_variable = stl_bf_dist
+						NOT = { this = scope:stl_gravity_self }
+						NOT = { var:stl_bf_dist >= 100 }
+					}
+
+					# weight = 100 - friction distance
+					set_local_variable = {
+						name = stl_pw
+						value = {
+							value = 100
+							subtract = var:stl_bf_dist
+						}
+					}
+					# Floor at 0
+					if = {
+						limit = { NOT = { local_var:stl_pw >= 0 } }
+						set_local_variable = { name = stl_pw value = 0 }
+					}
+
+					# Accumulate WAS/WAD for ALL 49 goods (generated effect)
+					# Reads buy/sell/production, computes effective surplus, writes to origin's WAS/WAD
+					stl_phase_b_accumulate_all_goods = yes
+				}
+			}
+		}
+	}
+
+	# Compute weighted average source prices from accumulated sums
+	# (must run BEFORE cleanup, while still in origin state scope)
+	stl_phase_b_finalize_prices = yes
+
+	# Cleanup BF distances
+	stl_cleanup_bf_dist = yes
+
+	clear_saved_scope = stl_gravity_self
+}

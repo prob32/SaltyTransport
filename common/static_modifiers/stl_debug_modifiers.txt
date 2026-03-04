@@ -1,0 +1,494 @@
+﻿# ========================================
+# DEBUG MODIFIERS FOR GRAVITY DIAGNOSTICS
+# Toggle: effect set_global_variable = { name = stl_debug_mode value = 1 }
+# ========================================
+
+stl_debug_base_grain = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_fish = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_fabric = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_wood = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_groceries = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_clothes = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_furniture = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_paper = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_merchant_marine = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_coal = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_iron = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_lead = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_sulfur = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_hardwood = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_rubber = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_oil = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_silk = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_dye = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_clippers = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_steamers = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_glass = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_fertilizer = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_tools = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_steel = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_engines = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_explosives = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_ammunition = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_small_arms = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_artillery = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_tanks = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_aeroplanes = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_manowars = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_ironclads = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_meat = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_fruit = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_sugar = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_tobacco = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_liquor = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_wine = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_tea = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_coffee = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_opium = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_porcelain = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_luxury_clothes = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_luxury_furniture = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_automobiles = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_telephones = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_radios = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_base_fine_art = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_grain = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_fish = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_fabric = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_wood = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_groceries = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_clothes = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_furniture = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_paper = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_merchant_marine = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_coal = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_iron = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_lead = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_sulfur = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_hardwood = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_rubber = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_oil = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_silk = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_dye = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_clippers = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_steamers = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_glass = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_fertilizer = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_tools = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_steel = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_engines = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_explosives = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_ammunition = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_small_arms = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_artillery = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_tanks = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_aeroplanes = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_manowars = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_ironclads = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_meat = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_fruit = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_sugar = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_tobacco = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_liquor = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_wine = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_tea = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_coffee = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_opium = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_porcelain = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_luxury_clothes = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_luxury_furniture = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_automobiles = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_telephones = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_radios = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}
+
+stl_debug_access_fine_art = {
+	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds
+	building_employment_laborers_add = 0.001
+}

@@ -1,0 +1,12 @@
+﻿# ========================================
+# PHASE A: REMOVED
+#
+# Phase A (anti-oscillation + ratio-equalization surplus/deficit) was removed
+# because the effective surplus model in Phase B handles price-based trade
+# decisions directly. Consumption is only implicitly considered via pricing.
+# The price mechanism + EMA smoothing in Phase C provides natural damping.
+#
+# Two-phase monthly cycle:
+#   Phase B (days 8-20): BF + effective surplus WAS/WAD + market price
+#   Phase C (days 21-28): Per-state trade + apply modifiers
+# ========================================

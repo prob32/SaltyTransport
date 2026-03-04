@@ -1,0 +1,27 @@
+﻿pmg_stl_trade_depot_base = {
+	texture = "gfx/interface/icons/production_method_icons/merchant_guilds.dds"
+	production_methods = {
+		pm_stl_trade_depot_base
+	}
+}
+
+pmg_stl_trade_depot_exports = {
+	texture = "gfx/interface/icons/production_method_icons/merchant_guilds.dds"
+	production_methods = {
+		pm_stl_trade_depot_exports
+	}
+}
+
+pmg_stl_trade_depot_imports = {
+	texture = "gfx/interface/icons/production_method_icons/merchant_guilds.dds"
+	production_methods = {
+		pm_stl_trade_depot_imports
+	}
+}
+
+pmg_stl_port_hub_base = {
+	texture = "gfx/interface/icons/production_method_icons/merchant_guilds.dds"
+	production_methods = {
+		pm_stl_port_hub_base
+	}
+}
