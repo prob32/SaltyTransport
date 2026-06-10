@@ -56,10 +56,9 @@ stl_ensure_depot_exists = {
 # hub state was lost; it also could not detect market merges leaving two hubs).
 # Scope: country (market owner only)
 stl_ensure_port_hub_for_market = {
+	set_local_variable = { name = stl_hub_count value = 0 }
 	if = {
 		limit = { this = market.owner }
-
-		set_local_variable = { name = stl_hub_count value = 0 }
 		market = {
 			every_scope_country = {
 				every_scope_state = {

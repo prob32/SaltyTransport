@@ -139,11 +139,19 @@ New (BPM/CMF patterns):
 - In-game: `events/stl_probe.txt` syntax probe + `-debug_mode` `error.log`
   round-trips.
 
-## 8. Open items pending vanilla 1.13 files
+## 8. Vanilla 1.13 verification results (resolved against 1.13.8 files)
 
-1. Re-sync `REPLACE:urban_planning` with the 1.13 definition.
-2. Confirm goods roster (manowars/ironclads register modifier types in 1.13.8
-   docs dumps but patch notes say the goods were removed from use; the
-   generator carries an `enabled` flag per good either way).
-3. Exact vanilla type names for the building-panel `000_` override.
-4. First full tiger run + baseline.
+1. `REPLACE:urban_planning` — vanilla 1.13 definition is byte-identical to
+   the 1.12 one our override reproduces; no change needed.
+2. Goods roster — manowars/ironclads still exist in `00_goods.txt` but no
+   vanilla PM produces or consumes them; they stay `enabled=False` in the
+   generator (inert either way, flip the flag if a mod revives them).
+3. Depot panel button — `gui/000_stl_building_panel.gui` overrides
+   `building_auto_expand_toggle` (first-loaded-wins), wrapping the verbatim
+   vanilla body in a flowcontainer plus a depot-only button that opens the
+   trade window. Re-sync the copied body after game patches.
+4. vic3-tiger v1.19.0 validates the mod with **zero findings** against the
+   1.13.8 tree (empty baseline committed). Blind spot: variable-map syntax
+   is unparseable to tiger; those files are covered by `tools/lint_pdx.py`
+   plus the in-game probe, and the filters are documented in
+   `vic3-tiger.conf` for removal once tiger gains map support.

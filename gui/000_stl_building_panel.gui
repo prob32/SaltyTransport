@@ -1,0 +1,96 @@
+﻿# ========================================
+# SALTY TRANSPORT - depot panel button (v2)
+#
+# GUI types are FIRST-loaded-wins; the 000_ prefix makes this file load
+# before vanilla building_details_panel.gui, so this redefinition of
+# building_auto_expand_toggle wins.
+#
+# It wraps the vanilla 1.13.8 body (copied verbatim below) in a
+# flowcontainer and appends one extra 35x35 button that is visible only on
+# the Salty Transport Trade Depot, opening the Internal Trade window.
+# Invisible flowcontainer children take no space, so every other building
+# renders exactly as vanilla.
+#
+# SYNC NOTE: if a patch changes vanilla building_auto_expand_toggle, this
+# copy must be re-synced (tools/validate.sh flags GUI breakage; also diff
+# against game/gui/building_details_panel.gui after each patch).
+# ========================================
+
+types stl_building_panel_overrides
+{
+	type building_auto_expand_toggle = flowcontainer {
+		visible = "[Or( IsPotential( Building.ToggleAutoExpand ), Building.IsBuildingType('building_stl_trade_depot') )]"
+
+		# --- vanilla 1.13.8 auto-expand toggle, verbatim ---
+		widget = {
+			visible = "[IsPotential( Building.ToggleAutoExpand )]"
+			size = { 35 35 }
+
+			icon = {
+				using = rotate_glow_blue
+				size = { 130% 130% }
+				visible = "[Building.IsAutoExpanding]"
+				alwaystransparent = yes
+				parentanchor = center
+				using = default_fade_in_out
+			}
+
+			button_icon_round_action = {
+				size = { 100% 100% }
+				visible = "[Building.IsAutoExpanding]"
+				enabled = "[IsValid( Building.ToggleAutoExpand )]"
+				onclick = "[Execute( Building.ToggleAutoExpand )]"
+				tooltip = "[Building.GetAutoExpandTooltip]"
+				using = tooltip_se
+				using = icon_toggle_single_off_sound
+
+				blockoverride "icon" {
+					texture = "gfx/interface/production_methods/auto_expand.dds"
+				}
+
+				blockoverride "icon_size" {
+					size = { 77% 77% }
+				}
+			}
+
+			button_icon_round_action = {
+				size = { 100% 100% }
+				visible = "[Not(Building.IsAutoExpanding)]"
+				enabled = "[IsValid( Building.ToggleAutoExpand )]"
+				onclick = "[Execute( Building.ToggleAutoExpand )]"
+				tooltip = "[Building.GetAutoExpandTooltip]"
+				using = tooltip_se
+				using = icon_toggle_single_on_sound
+
+				blockoverride "icon" {
+					texture = "gfx/interface/production_methods/auto_expand_not.dds"
+				}
+
+				blockoverride "icon_size" {
+					size = { 77% 77% }
+				}
+			}
+		}
+
+		# --- Salty Transport: open the Internal Trade window ---
+		widget = {
+			visible = "[Building.IsBuildingType('building_stl_trade_depot')]"
+			size = { 35 35 }
+
+			button_icon_round_action = {
+				size = { 100% 100% }
+				onclick = "[GetScriptedGui('stl_sgui_open_window').Execute(GuiScope.SetRoot(GetPlayer.MakeScope).AddScope('stl_target_state', Building.GetState.MakeScope).End)]"
+				tooltip = "stl_trade_window_open"
+				using = tooltip_se
+
+				blockoverride "icon" {
+					texture = "gfx/interface/icons/generic_icons/trade.dds"
+				}
+
+				blockoverride "icon_size" {
+					size = { 77% 77% }
+				}
+			}
+		}
+	}
+}

@@ -1194,6 +1194,23 @@ def gen_localization():
     for (g, disp, _b, _t, _c, _en) in enabled_goods():
         L.append(f' stl_debug_access_{g}:0 "DEBUG Access: {disp}"')
     L.append("")
+    # loc for the modifier TYPES we define (vanilla pattern: "@coal! Coal input")
+    L.append(" # === custom modifier type names ===")
+    for (g, disp, _b, _t, _c, _en) in enabled_goods():
+        if g not in VANILLA_INPUT_MULT:
+            L.append(f' goods_input_{g}_mult:0 "@{g}! {disp} input"')
+            L.append(f' goods_input_{g}_mult_desc:0 ""')
+    L.append(' goods_input_transportation_mult:0 "@transportation! Transportation input"')
+    L.append(' goods_input_transportation_mult_desc:0 ""')
+    for (g, disp, _b, _t, _c, _en) in enabled_goods():
+        if g not in VANILLA_OUTPUT_MULT:
+            L.append(f' goods_output_{g}_mult:0 "@{g}! {disp} output"')
+            L.append(f' goods_output_{g}_mult_desc:0 ""')
+    for (g, disp, _b, _t, _c, _en) in enabled_goods():
+        if g in MISSING_INPUT_ADD:
+            L.append(f' goods_input_{g}_add:0 "@{g}! {disp} input"')
+            L.append(f' goods_input_{g}_add_desc:0 ""')
+    L.append("")
     write_file("localization/english/stl_l_english.yml", "\n".join(L))
 
 

@@ -60,7 +60,7 @@ window = {
 			layoutpolicy_horizontal = expanding
 			autoresize = yes
 			align = center
-			using = fontstyle_heading_2
+			using = fontsize_large
 			text = "[State.GetName]"
 		}
 
@@ -181,7 +181,7 @@ window = {
 				layoutpolicy_horizontal = expanding
 				autoresize = yes
 				align = left
-				using = fontstyle_heading_2
+				using = fontsize_large
 				text = "stl_trade_window_partners"
 			}
 			hbox = {
