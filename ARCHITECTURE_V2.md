@@ -45,15 +45,24 @@ Access patterns (1.13.7 API):
 - iterate: `every_key_in_variable_map = { name = X ... }`
 - clear: `clear_variable_map = X` / `remove_from_variable_map`
 
-**Risk + fallback.** Variable maps are absent from the game's own `script_docs`
-dump and from vic3-tiger v1.19.0, so they cannot be machine-validated yet.
-Mitigations: (a) `common/scripted_effects/stl_probe.txt` ships a syntax probe
-that exercises every map operation and logs results — fire it via the
-decision "Salty Transport: Run Syntax Probe" before trusting a build;
-(b) `tools/generate_goods.py` has a `STORAGE` switch
-(`maps` | `vars`) that regenerates the entire storage layer in the legacy
-name-mangled form if maps misbehave; hand-written files access storage only
-through generated helper effects so the switch is total.
+**REALITY CHECK (live-tested, June 2026).** Runtime logs proved that
+`add_to_variable_map` stores its `value` as an event-target **reference,
+not a copied number**: values written from `local_var:` resolve fine within
+the same effect chain but read back as
+`Event target link 'local_var' returned an unset scope` from any other
+chain (1M+ errors before diagnosis). Consequently:
+
+- **Per-good storage runs on the `vars` backend** (name-mangled variables;
+  `set_variable` copies values) — `tools/generate_goods.py` default.
+- **Maps are used only for same-chain data**: the Bellman-Ford distance map
+  `stl_bf_dist` (written, read and cleared inside one chain — proven clean
+  across 506 live runs) — plus the `stl_active_goods` variable *list*,
+  whose flag targets are immortal and safe to store.
+- Probe step 9 (two-run protocol) re-tests value persistence each patch;
+  if it ever reports PASS, the `--storage=maps` backend can be revisited.
+- Variable maps also remain absent from `script_docs` and vic3-tiger, so
+  the probe decision ("Salty Transport: Run Syntax Probe") stays the
+  authority on their behavior.
 
 ## 2. Monthly cycle (unchanged shape, hardened mechanics)
 

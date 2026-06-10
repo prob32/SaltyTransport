@@ -1,37 +1,11 @@
 ﻿# ========================================
-# SALTY TRANSPORT - Scripted GUIs (v2)
+# SALTY TRANSPORT - Scripted GUIs (hand-written)
 #
-# Five generic entries replace the v0.1 per-good set (2 x 49 generated).
-# The good is passed from the GUI as a flag scope:
-#   datacontext = "[GetScriptedGui('stl_sgui_show_import_partners')]"
-#   onclick = "[ScriptedGui.Execute(GuiScope.SetRoot(State.MakeScope).AddScope('stl_goods_flag', MakeScopeFlag(Goods.GetKey)).End)]"
+# Per-good partner-display entries live in the GENERATED file
+# stl_scripted_guis_generated.txt; this file keeps only the generic ones.
 # ========================================
 
-# Build the partner breakdown for one good, import view (cheap partners).
-stl_sgui_show_import_partners = {
-	scope = state
-	effect = {
-		set_variable = { name = stl_display_is_import value = 1 }
-		stl_build_partner_display = yes
-	}
-	is_shown = { always = yes }
-	is_valid = { always = yes }
-	ai_is_valid = { always = no }
-}
-
-# Build the partner breakdown for one good, export view (expensive partners).
-stl_sgui_show_export_partners = {
-	scope = state
-	effect = {
-		set_variable = { name = stl_display_is_import value = 0 }
-		stl_build_partner_display = yes
-	}
-	is_shown = { always = yes }
-	is_valid = { always = yes }
-	ai_is_valid = { always = no }
-}
-
-# Tear down the partner breakdown (panel closed / selection changed).
+# Tear down the partner breakdown (clear button in the trade window).
 stl_sgui_clear_display = {
 	scope = state
 	effect = {

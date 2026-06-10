@@ -142,14 +142,23 @@ clear_variable_map = my_map
 every_key_in_variable_map = { name = my_map <effects on each key scope> }
 ```
 
-**CAVEATS**: these are missing from the game's own `script_docs` dump and
-from vic3-tiger (as of v1.19.0), so they cannot be machine-validated. After
-each game patch, take the in-game decision "Salty Transport: Run Syntax
-Probe" — it exercises every operation above and logs PASS/FAIL lines to
+**CRITICAL — values are stored by REFERENCE, not copied** (live-confirmed):
+`add_to_variable_map = { ... value = local_var:x }` stores the *event
+target* `local_var:x`, not the number. Reading the key from the same effect
+chain works; reading it from any later chain yields
+`Event target link 'local_var' returned an unset scope` and the fetch
+fails. Use maps only for (a) data written and read within one chain (e.g.
+pathfinding scratch), or (b) values from immortal targets (flags). For
+anything persistent, use plain variables — `set_variable` copies.
+
+**Other caveats**: maps are missing from the game's own `script_docs` dump
+and from vic3-tiger (as of v1.19.0), so they cannot be machine-validated.
+After each game patch, take the in-game decision "Salty Transport: Run
+Syntax Probe" — it exercises every operation above (including a two-run
+cross-chain persistence test, step 9) and logs PASS/FAIL lines to
 debug.log. GUI data functions exist only for GLOBAL maps
 (`GetVariableFromGlobalVariableMap`, `GetGlobalMapKeys`, ...); for
-state/country maps, bind through script values that read
-`variable_map(...)`.
+state/country maps, bind through script values.
 
 ---
 

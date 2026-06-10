@@ -171,6 +171,29 @@ stl_probe_variable_maps = {
 		debug_log = "[STL PROBE] FAIL 8: saved scope lost inside while body"
 	}
 
+	# --- 9. cross-chain map VALUE persistence (two-run protocol) ---
+	# Live finding (1M+ errors): add_to_variable_map stores its value as an
+	# event-target REFERENCE; values written from local_var: are dead when a
+	# different effect chain reads them. This step writes a local-sourced
+	# value now and verifies it on the NEXT probe run. While this reports
+	# FAIL/dead, per-good storage must stay on the vars backend.
+	if = {
+		limit = { has_variable_map = stl_probe_persist }
+		if = {
+			limit = { variable_map(stl_probe_persist|flag:grain) >= 41 }
+			debug_log = "[STL PROBE] PASS 9: map value from local_var survived across chains (maps backend usable!)"
+		}
+		else = {
+			debug_log = "[STL PROBE] FAIL 9: map value from local_var is dead across chains (known 1.13 behaviour - keep vars backend)"
+		}
+		clear_variable_map = stl_probe_persist
+	}
+	else = {
+		debug_log = "[STL PROBE] INFO 9: persistence value written - run this probe again (any later day) to get the PASS/FAIL"
+	}
+	set_local_variable = { name = stl_probe_pv value = 41 }
+	add_to_variable_map = { name = stl_probe_persist key = flag:grain value = local_var:stl_probe_pv }
+
 	# --- cleanup ---
 	clear_variable_map = stl_probe_map
 	if = {
@@ -178,5 +201,5 @@ stl_probe_variable_maps = {
 		clear_variable_map = stl_probe_smap
 	}
 	clear_saved_scope = stl_probe_self
-	debug_log = "[STL PROBE] done - if every step above says PASS, the maps backend is safe"
+	debug_log = "[STL PROBE] done - PASS on 1-6,8 plus the step-9 verdict define what storage the mod may use"
 }

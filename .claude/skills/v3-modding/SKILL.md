@@ -90,11 +90,12 @@ description: Victoria 3 (1.13.x) modding workflow for this repo — validation h
 
 - Architecture: ARCHITECTURE_V2.md (storage maps, two-phase cycle, GUI).
   Economic model: TRADE_DISTRIBUTION.md.
-- Per-good state data: variable maps keyed `flag:<good>` (`stl_price`,
-  `stl_econ`, `stl_eff_export`, `stl_last_import`, ...); BF distances: map
-  `stl_bf_dist` on the ORIGIN keyed by state; GUI iterates the
-  `stl_active_goods` variable list.
-- Generator backend switch: `--storage=vars` regenerates the whole storage
-  layer as name-mangled variables if maps misbehave in some context.
+- Per-good state data: name-mangled VARIABLES (`stl_price_<good>`, ...) —
+  the `vars` generator backend. Variable maps store values by REFERENCE
+  (local_var-sourced values die across chains; live-confirmed), so maps are
+  reserved for same-chain data: the BF distance map `stl_bf_dist` on the
+  ORIGIN keyed by state. GUI iterates the `stl_active_goods` flag list.
+- Generator backend switch: `--storage=maps` exists for a future re-enable
+  if probe step 9 ever reports PASS (cross-chain value persistence).
 - 1.13 migration table: PDX_SCRIPTING_GUIDE.md § 1.13 Migration Notes
   (`has_port_state`, removed convoys/naval goods, straits, role triggers).

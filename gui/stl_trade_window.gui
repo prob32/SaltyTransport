@@ -136,20 +136,20 @@ window = {
 									align = right
 									text = "[State.MakeScope.ScriptValue(Concatenate('stl_gui_transport_', Goods.GetKey))|0]"
 								}
-								# partner breakdown buttons
+								# partner breakdown buttons (per-good generated sguis)
 								button = {
 									size = { 24 24 }
 									using = default_button
 									tooltip = "stl_trade_window_btn_import_tt"
 									text = "I"
-									onclick = "[GetScriptedGui('stl_sgui_show_import_partners').Execute(GuiScope.SetRoot(State.MakeScope).AddScope('stl_goods_flag', MakeScopeFlag(Goods.GetKey)).End)]"
+									onclick = "[GetScriptedGui(Concatenate('stl_show_import_', Goods.GetKey)).Execute(GuiScope.SetRoot(State.MakeScope).End)]"
 								}
 								button = {
 									size = { 24 24 }
 									using = default_button
 									tooltip = "stl_trade_window_btn_export_tt"
 									text = "E"
-									onclick = "[GetScriptedGui('stl_sgui_show_export_partners').Execute(GuiScope.SetRoot(State.MakeScope).AddScope('stl_goods_flag', MakeScopeFlag(Goods.GetKey)).End)]"
+									onclick = "[GetScriptedGui(Concatenate('stl_show_export_', Goods.GetKey)).Execute(GuiScope.SetRoot(State.MakeScope).End)]"
 								}
 							}
 						}

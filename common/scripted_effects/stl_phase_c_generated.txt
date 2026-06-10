@@ -112,10 +112,7 @@ stl_phase_c_good = {
 					remove_modifier = stl_debug_base_$GOODS$
 					remove_modifier = stl_debug_access_$GOODS$
 				}
-				if = {
-					limit = { is_key_in_variable_map = { name = stl_transport key = flag:$GOODS$ } }
-					remove_from_variable_map = { name = stl_transport key = flag:$GOODS$ }
-				}
+				if = { limit = { has_variable = stl_transport_$GOODS$ } remove_variable = stl_transport_$GOODS$ }
 			}
 		}
 	}
@@ -132,32 +129,26 @@ stl_phase_c_good = {
 				# previous applied trade (EMA input), then reset
 				set_local_variable = { name = stl_old_export value = 0 }
 				if = {
-					limit = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
-					set_local_variable = { name = stl_old_export value = variable_map(stl_last_export|flag:$GOODS$) }
+					limit = { has_variable = stl_last_export_$GOODS$ }
+					set_local_variable = { name = stl_old_export value = var:stl_last_export_$GOODS$ }
 				}
 				set_local_variable = { name = stl_old_import value = 0 }
 				if = {
-					limit = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
-					set_local_variable = { name = stl_old_import value = variable_map(stl_last_import|flag:$GOODS$) }
+					limit = { has_variable = stl_last_import_$GOODS$ }
+					set_local_variable = { name = stl_old_import value = var:stl_last_import_$GOODS$ }
 				}
-				if = {
-					limit = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
-					remove_from_variable_map = { name = stl_last_export key = flag:$GOODS$ }
-				}
-				if = {
-					limit = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
-					remove_from_variable_map = { name = stl_last_import key = flag:$GOODS$ }
-				}
+				if = { limit = { has_variable = stl_last_export_$GOODS$ } remove_variable = stl_last_export_$GOODS$ }
+				if = { limit = { has_variable = stl_last_import_$GOODS$ } remove_variable = stl_last_import_$GOODS$ }
 
 				# --- exporters ---
 				if = {
 					limit = {
-						is_key_in_variable_map = { name = stl_eff_export key = flag:$GOODS$ }
-						is_key_in_variable_map = { name = stl_max_wad key = flag:$GOODS$ }
-						variable_map(stl_eff_export|flag:$GOODS$) > 0
-						variable_map(stl_max_wad|flag:$GOODS$) > 0.01
+						has_variable = stl_eff_export_$GOODS$
+						has_variable = stl_max_wad_$GOODS$
+						var:stl_eff_export_$GOODS$ > 0
+						var:stl_max_wad_$GOODS$ > 0.01
 					}
-					set_local_variable = { name = stl_trade_amount value = variable_map(stl_eff_export|flag:$GOODS$) }
+					set_local_variable = { name = stl_trade_amount value = var:stl_eff_export_$GOODS$ }
 					# EMA toward the Phase B target
 					set_local_variable = {
 						name = stl_trade_amount
@@ -181,7 +172,7 @@ stl_phase_c_good = {
 						limit = { local_var:stl_trade_amount > local_var:stl_cap_up }
 						set_local_variable = { name = stl_trade_amount value = local_var:stl_cap_up }
 					}
-					add_to_variable_map = { name = stl_last_export key = flag:$GOODS$ value = local_var:stl_trade_amount }
+					set_variable = { name = stl_last_export_$GOODS$ value = local_var:stl_trade_amount }
 					var:stl_trade_depot_ref = {
 						add_modifier = {
 							name = stl_export_$GOODS$
@@ -190,11 +181,11 @@ stl_phase_c_good = {
 					}
 					if = {
 						limit = { global_var:stl_debug_mode >= 1 }
-						set_local_variable = { name = stl_debug_base value = variable_map(stl_eff_export|flag:$GOODS$) }
+						set_local_variable = { name = stl_debug_base value = var:stl_eff_export_$GOODS$ }
 						var:stl_trade_depot_ref = {
 							add_modifier = { name = stl_debug_base_$GOODS$ multiplier = stl_debug_base_multiplier }
 						}
-						set_local_variable = { name = stl_debug_access value = { value = variable_map(stl_wad|flag:$GOODS$) divide = variable_map(stl_max_wad|flag:$GOODS$) } }
+						set_local_variable = { name = stl_debug_access value = { value = var:stl_wad_$GOODS$ divide = var:stl_max_wad_$GOODS$ } }
 						var:stl_trade_depot_ref = {
 							add_modifier = { name = stl_debug_access_$GOODS$ multiplier = stl_debug_access_multiplier }
 						}
@@ -204,12 +195,12 @@ stl_phase_c_good = {
 				# --- importers ---
 				if = {
 					limit = {
-						is_key_in_variable_map = { name = stl_eff_import key = flag:$GOODS$ }
-						is_key_in_variable_map = { name = stl_max_was key = flag:$GOODS$ }
-						variable_map(stl_eff_import|flag:$GOODS$) > 0
-						variable_map(stl_max_was|flag:$GOODS$) > 0.01
+						has_variable = stl_eff_import_$GOODS$
+						has_variable = stl_max_was_$GOODS$
+						var:stl_eff_import_$GOODS$ > 0
+						var:stl_max_was_$GOODS$ > 0.01
 					}
-					set_local_variable = { name = stl_trade_amount value = variable_map(stl_eff_import|flag:$GOODS$) }
+					set_local_variable = { name = stl_trade_amount value = var:stl_eff_import_$GOODS$ }
 					set_local_variable = {
 						name = stl_trade_amount
 						value = {
@@ -231,7 +222,7 @@ stl_phase_c_good = {
 						limit = { local_var:stl_trade_amount > local_var:stl_cap_up }
 						set_local_variable = { name = stl_trade_amount value = local_var:stl_cap_up }
 					}
-					add_to_variable_map = { name = stl_last_import key = flag:$GOODS$ value = local_var:stl_trade_amount }
+					set_variable = { name = stl_last_import_$GOODS$ value = local_var:stl_trade_amount }
 					var:stl_trade_depot_ref = {
 						add_modifier = {
 							name = stl_import_$GOODS$
@@ -240,11 +231,11 @@ stl_phase_c_good = {
 					}
 					if = {
 						limit = { global_var:stl_debug_mode >= 1 }
-						set_local_variable = { name = stl_debug_base value = variable_map(stl_eff_import|flag:$GOODS$) }
+						set_local_variable = { name = stl_debug_base value = var:stl_eff_import_$GOODS$ }
 						var:stl_trade_depot_ref = {
 							add_modifier = { name = stl_debug_base_$GOODS$ multiplier = stl_debug_base_multiplier }
 						}
-						set_local_variable = { name = stl_debug_access value = { value = variable_map(stl_was|flag:$GOODS$) divide = variable_map(stl_max_was|flag:$GOODS$) } }
+						set_local_variable = { name = stl_debug_access value = { value = var:stl_was_$GOODS$ divide = var:stl_max_was_$GOODS$ } }
 						var:stl_trade_depot_ref = {
 							add_modifier = { name = stl_debug_access_$GOODS$ multiplier = stl_debug_access_multiplier }
 						}
@@ -255,13 +246,13 @@ stl_phase_c_good = {
 				if = {
 					limit = {
 						local_var:stl_old_export > 0.5
-						NOT = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
-						NOT = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
+						NOT = { has_variable = stl_last_export_$GOODS$ }
+						NOT = { has_variable = stl_last_import_$GOODS$ }
 					}
 					set_local_variable = { name = stl_trade_amount value = { value = local_var:stl_old_export multiply = 0.8 } }
 					if = {
 						limit = { local_var:stl_trade_amount > 0.5 }
-						add_to_variable_map = { name = stl_last_export key = flag:$GOODS$ value = local_var:stl_trade_amount }
+						set_variable = { name = stl_last_export_$GOODS$ value = local_var:stl_trade_amount }
 						var:stl_trade_depot_ref = {
 							add_modifier = {
 								name = stl_export_$GOODS$
@@ -273,13 +264,13 @@ stl_phase_c_good = {
 				if = {
 					limit = {
 						local_var:stl_old_import > 0.5
-						NOT = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
-						NOT = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
+						NOT = { has_variable = stl_last_import_$GOODS$ }
+						NOT = { has_variable = stl_last_export_$GOODS$ }
 					}
 					set_local_variable = { name = stl_trade_amount value = { value = local_var:stl_old_import multiply = 0.8 } }
 					if = {
 						limit = { local_var:stl_trade_amount > 0.5 }
-						add_to_variable_map = { name = stl_last_import key = flag:$GOODS$ value = local_var:stl_trade_amount }
+						set_variable = { name = stl_last_import_$GOODS$ value = local_var:stl_trade_amount }
 						var:stl_trade_depot_ref = {
 							add_modifier = {
 								name = stl_import_$GOODS$
@@ -303,17 +294,17 @@ stl_phase_c_good = {
 					has_building = building_stl_trade_depot
 				}
 				if = {
-					limit = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
+					limit = { has_variable = stl_last_export_$GOODS$ }
 					set_global_variable = {
 						name = stl_sum_exports
-						value = { value = global_var:stl_sum_exports add = variable_map(stl_last_export|flag:$GOODS$) }
+						value = { value = global_var:stl_sum_exports add = var:stl_last_export_$GOODS$ }
 					}
 				}
 				if = {
-					limit = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
+					limit = { has_variable = stl_last_import_$GOODS$ }
 					set_global_variable = {
 						name = stl_sum_imports
-						value = { value = global_var:stl_sum_imports add = variable_map(stl_last_import|flag:$GOODS$) }
+						value = { value = global_var:stl_sum_imports add = var:stl_last_import_$GOODS$ }
 					}
 				}
 			}
@@ -372,16 +363,16 @@ stl_phase_c_good = {
 					# scale exports down
 					if = {
 						limit = {
-							is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ }
+							has_variable = stl_last_export_$GOODS$
 							NOT = { global_var:stl_norm_export >= 1 }
 						}
 						var:stl_trade_depot_ref = {
 							remove_modifier = stl_export_$GOODS$
 						}
-						set_local_variable = { name = stl_scaled value = { value = variable_map(stl_last_export|flag:$GOODS$) multiply = global_var:stl_norm_export } }
+						set_local_variable = { name = stl_scaled value = { value = var:stl_last_export_$GOODS$ multiply = global_var:stl_norm_export } }
 						if = {
 							limit = { local_var:stl_scaled > 0.5 }
-							add_to_variable_map = { name = stl_last_export key = flag:$GOODS$ value = local_var:stl_scaled }
+							set_variable = { name = stl_last_export_$GOODS$ value = local_var:stl_scaled }
 							set_local_variable = { name = stl_trade_amount value = local_var:stl_scaled }
 							var:stl_trade_depot_ref = {
 								add_modifier = {
@@ -392,25 +383,22 @@ stl_phase_c_good = {
 						}
 						else = {
 							# rounds to zero: drop it entirely (no phantom flows)
-							if = {
-								limit = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
-								remove_from_variable_map = { name = stl_last_export key = flag:$GOODS$ }
-							}
+							if = { limit = { has_variable = stl_last_export_$GOODS$ } remove_variable = stl_last_export_$GOODS$ }
 						}
 					}
 					# scale imports down
 					if = {
 						limit = {
-							is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ }
+							has_variable = stl_last_import_$GOODS$
 							NOT = { global_var:stl_norm_import >= 1 }
 						}
 						var:stl_trade_depot_ref = {
 							remove_modifier = stl_import_$GOODS$
 						}
-						set_local_variable = { name = stl_scaled value = { value = variable_map(stl_last_import|flag:$GOODS$) multiply = global_var:stl_norm_import } }
+						set_local_variable = { name = stl_scaled value = { value = var:stl_last_import_$GOODS$ multiply = global_var:stl_norm_import } }
 						if = {
 							limit = { local_var:stl_scaled > 0.5 }
-							add_to_variable_map = { name = stl_last_import key = flag:$GOODS$ value = local_var:stl_scaled }
+							set_variable = { name = stl_last_import_$GOODS$ value = local_var:stl_scaled }
 							set_local_variable = { name = stl_trade_amount value = local_var:stl_scaled }
 							var:stl_trade_depot_ref = {
 								add_modifier = {
@@ -421,10 +409,7 @@ stl_phase_c_good = {
 						}
 						else = {
 							# rounds to zero: drop it entirely (fixes v0.1 phantom transport)
-							if = {
-								limit = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
-								remove_from_variable_map = { name = stl_last_import key = flag:$GOODS$ }
-							}
+							if = { limit = { has_variable = stl_last_import_$GOODS$ } remove_variable = stl_last_import_$GOODS$ }
 						}
 					}
 				}
@@ -439,12 +424,12 @@ stl_phase_c_good = {
 				limit = {
 					has_variable = stl_trade_depot_ref
 					has_building = building_stl_trade_depot
-					is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ }
-					is_key_in_variable_map = { name = stl_was key = flag:$GOODS$ }
-					variable_map(stl_was|flag:$GOODS$) > 0.01
+					has_variable = stl_last_import_$GOODS$
+					has_variable = stl_was_$GOODS$
+					var:stl_was_$GOODS$ > 0.01
 				}
 				# cost factor = max_WAS / WAS, clamped to [1, 10]
-				set_local_variable = { name = stl_distance_factor value = { value = variable_map(stl_max_was|flag:$GOODS$) divide = variable_map(stl_was|flag:$GOODS$) } }
+				set_local_variable = { name = stl_distance_factor value = { value = var:stl_max_was_$GOODS$ divide = var:stl_was_$GOODS$ } }
 				if = {
 					limit = { NOT = { local_var:stl_distance_factor >= 1 } }
 					set_local_variable = { name = stl_distance_factor value = 1 }
@@ -453,8 +438,8 @@ stl_phase_c_good = {
 					limit = { local_var:stl_distance_factor > 10 }
 					set_local_variable = { name = stl_distance_factor value = 10 }
 				}
-				set_local_variable = { name = stl_transport_amount value = { value = variable_map(stl_last_import|flag:$GOODS$) multiply = local_var:stl_distance_factor } }
-				add_to_variable_map = { name = stl_transport key = flag:$GOODS$ value = local_var:stl_transport_amount }
+				set_local_variable = { name = stl_transport_amount value = { value = var:stl_last_import_$GOODS$ multiply = local_var:stl_distance_factor } }
+				set_variable = { name = stl_transport_$GOODS$ value = local_var:stl_transport_amount }
 				var:stl_trade_depot_ref = {
 					add_modifier = {
 						name = stl_transport_$GOODS$
@@ -474,39 +459,33 @@ stl_phase_c_good = {
 					has_building = building_stl_trade_depot
 				}
 				if = {
-					limit = { is_key_in_variable_map = { name = stl_eff_export key = flag:$GOODS$ } is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } variable_map(stl_eff_export|flag:$GOODS$) > 0.01 }
-					set_local_variable = { name = stl_acc_pct value = { value = variable_map(stl_last_export|flag:$GOODS$) divide = variable_map(stl_eff_export|flag:$GOODS$) multiply = 100 } }
+					limit = { has_variable = stl_eff_export_$GOODS$ has_variable = stl_last_export_$GOODS$ var:stl_eff_export_$GOODS$ > 0.01 }
+					set_local_variable = { name = stl_acc_pct value = { value = var:stl_last_export_$GOODS$ divide = var:stl_eff_export_$GOODS$ multiply = 100 } }
 					if = { limit = { local_var:stl_acc_pct > 100 } set_local_variable = { name = stl_acc_pct value = 100 } }
 					if = { limit = { NOT = { local_var:stl_acc_pct >= 0 } } set_local_variable = { name = stl_acc_pct value = 0 } }
-					add_to_variable_map = { name = stl_access_export key = flag:$GOODS$ value = local_var:stl_acc_pct }
+					set_variable = { name = stl_access_export_$GOODS$ value = local_var:stl_acc_pct }
 				}
 				if = {
-					limit = { OR = { NOT = { is_key_in_variable_map = { name = stl_eff_export key = flag:$GOODS$ } } NOT = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } } } }
-					if = {
-						limit = { is_key_in_variable_map = { name = stl_access_export key = flag:$GOODS$ } }
-						remove_from_variable_map = { name = stl_access_export key = flag:$GOODS$ }
-					}
+					limit = { OR = { NOT = { has_variable = stl_eff_export_$GOODS$ } NOT = { has_variable = stl_last_export_$GOODS$ } } }
+					if = { limit = { has_variable = stl_access_export_$GOODS$ } remove_variable = stl_access_export_$GOODS$ }
 				}
 				if = {
-					limit = { is_key_in_variable_map = { name = stl_eff_import key = flag:$GOODS$ } is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } variable_map(stl_eff_import|flag:$GOODS$) > 0.01 }
-					set_local_variable = { name = stl_acc_pct value = { value = variable_map(stl_last_import|flag:$GOODS$) divide = variable_map(stl_eff_import|flag:$GOODS$) multiply = 100 } }
+					limit = { has_variable = stl_eff_import_$GOODS$ has_variable = stl_last_import_$GOODS$ var:stl_eff_import_$GOODS$ > 0.01 }
+					set_local_variable = { name = stl_acc_pct value = { value = var:stl_last_import_$GOODS$ divide = var:stl_eff_import_$GOODS$ multiply = 100 } }
 					if = { limit = { local_var:stl_acc_pct > 100 } set_local_variable = { name = stl_acc_pct value = 100 } }
 					if = { limit = { NOT = { local_var:stl_acc_pct >= 0 } } set_local_variable = { name = stl_acc_pct value = 0 } }
-					add_to_variable_map = { name = stl_access_import key = flag:$GOODS$ value = local_var:stl_acc_pct }
+					set_variable = { name = stl_access_import_$GOODS$ value = local_var:stl_acc_pct }
 				}
 				if = {
-					limit = { OR = { NOT = { is_key_in_variable_map = { name = stl_eff_import key = flag:$GOODS$ } } NOT = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } } } }
-					if = {
-						limit = { is_key_in_variable_map = { name = stl_access_import key = flag:$GOODS$ } }
-						remove_from_variable_map = { name = stl_access_import key = flag:$GOODS$ }
-					}
+					limit = { OR = { NOT = { has_variable = stl_eff_import_$GOODS$ } NOT = { has_variable = stl_last_import_$GOODS$ } } }
+					if = { limit = { has_variable = stl_access_import_$GOODS$ } remove_variable = stl_access_import_$GOODS$ }
 				}
 				# membership in the GUI's active-goods list
 				if = {
 					limit = {
 						OR = {
-							is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ }
-							is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ }
+							has_variable = stl_last_export_$GOODS$
+							has_variable = stl_last_import_$GOODS$
 						}
 						NOT = { is_target_in_variable_list = { name = stl_active_goods target = flag:$GOODS$ } }
 					}
@@ -514,8 +493,8 @@ stl_phase_c_good = {
 				}
 				if = {
 					limit = {
-						NOT = { is_key_in_variable_map = { name = stl_last_export key = flag:$GOODS$ } }
-						NOT = { is_key_in_variable_map = { name = stl_last_import key = flag:$GOODS$ } }
+						NOT = { has_variable = stl_last_export_$GOODS$ }
+						NOT = { has_variable = stl_last_import_$GOODS$ }
 						is_target_in_variable_list = { name = stl_active_goods target = flag:$GOODS$ }
 					}
 					remove_list_variable = { name = stl_active_goods target = flag:$GOODS$ }
