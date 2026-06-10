@@ -1,40 +1,36 @@
 ﻿# ========================================
-# BELLMAN-FORD INFRASTRUCTURE FRICTION PATHFINDING (v2)
+# BELLMAN-FORD INFRASTRUCTURE FRICTION PATHFINDING (v2.2)
 #
 # Computes shortest-path friction from one origin state to every
 # reachable depot state in the same market.
 #
-# v2: distances live in a variable map ON THE ORIGIN, keyed by state.
-#   - no 999-initialization sweep over the market
-#   - no cleanup sweep over other countries' states
-#   - concurrent use (tooltip refresh vs monthly cycle) cannot collide
-#     across states; the origin clears only its own map
+# Distances live in var:stl_bf_dist ON EACH REACHED STATE, written with
+# set_variable (which COPIES the number). Variable maps are not usable
+# here: add_to_variable_map stores its value as an event-target REFERENCE,
+# so writing a reused local (stl_bf_new_dist) aliased every map entry to
+# the same cell — all distances read back as the last edge computed.
+# (Live-confirmed semantics; see PDX_SCRIPTING_GUIDE.md § Variable Maps.)
 #
 # Friction per state = max(1, 5 x (infra_usage / infra))
 #   spare capacity ~1, fully used = 5, over-capacity > 5, none = 10
 # Weight = max(0, 100 - cumulative_friction); >= 100 = unreachable.
 #
-# Scope: state (the BF origin). Read results from the origin:
-#   is_key_in_variable_map = { name = stl_bf_dist key = <state> }
-#   variable_map(stl_bf_dist|<state>)
-# Call stl_cleanup_bf_dist (self-clear) when done.
+# No 999-initialization sweep is needed: absence of the variable means
+# unreached, and relaxation inserts-or-improves. Cleanup IS needed
+# (distances sit on other states): call stl_cleanup_bf_dist when done.
+#
+# Do NOT save scopes inside nested transition blocks here (1.13 quirk,
+# see guide); the origin is saved plainly and markets are compared via
+# the market link.
+#
+# Scope: state (the BF origin).
 # ========================================
 
 stl_run_bellman_ford = {
 	save_scope_as = stl_bf_origin
-	# NOTE: do NOT save the market as a scope here. In 1.13, a scope saved
-	# inside a nested transition block (owner = { market = { save_scope_as }})
-	# comes back "Undefined event target" when referenced later (confirmed
-	# from error.log 506x; worked in 1.12). Plain saves on the current scope
-	# (stl_bf_origin) work. We re-derive the market via links instead, which
-	# the same log shows running clean.
 
-	# Reset map; origin distance = 0
-	if = {
-		limit = { has_variable_map = stl_bf_dist }
-		clear_variable_map = stl_bf_dist
-	}
-	add_to_variable_map = { name = stl_bf_dist key = scope:stl_bf_origin value = 0 }
+	# origin distance = 0
+	set_variable = { name = stl_bf_dist value = 0 }
 
 	# ===== RELAXATION PASSES (7 passes for up to 7-hop paths) =====
 	set_local_variable = { name = stl_bf_pass value = 0 }
@@ -44,75 +40,63 @@ stl_run_bellman_ford = {
 		}
 		change_local_variable = { name = stl_bf_pass add = 1 }
 
-		# For each known state S, relax edges to all neighbors N
+		# For each reached state S, relax edges to all neighbors N
 		# (scope here = origin state; market link is valid from state)
 		market = {
 			every_scope_country = {
 				every_scope_state = {
 					limit = {
 						has_variable = stl_trade_depot_ref
-						# S is in the frontier (already reached)...
-						scope:stl_bf_origin = {
-							is_key_in_variable_map = { name = stl_bf_dist key = prev }
+						has_variable = stl_bf_dist
+						NOT = { var:stl_bf_dist >= 100 }
+					}
+
+					set_local_variable = { name = stl_s_dist value = var:stl_bf_dist }
+
+					every_neighbouring_state = {
+						limit = {
+							has_variable = stl_trade_depot_ref
+							market = { this = scope:stl_bf_origin.market }
 						}
-					}
 
-					# read S's distance while S is unambiguous (prev inside origin block)
-					scope:stl_bf_origin = {
-						set_local_variable = { name = stl_s_dist value = variable_map(stl_bf_dist|prev) }
-					}
-
-					# ...and not already past the reachability cutoff
-					if = {
-						limit = { NOT = { local_var:stl_s_dist >= 100 } }
-
-						every_neighbouring_state = {
-							limit = {
-								has_variable = stl_trade_depot_ref
-								market = { this = scope:stl_bf_origin.market }
-							}
-
-							# friction for entering this neighbor
-							if = {
-								limit = { infrastructure >= 1 }
-								set_local_variable = {
-									name = stl_bf_friction
-									value = {
-										value = infrastructure_usage
-										divide = infrastructure
-										multiply = 5
-									}
-								}
-								if = {
-									limit = { NOT = { local_var:stl_bf_friction >= 1 } }
-									set_local_variable = { name = stl_bf_friction value = 1 }
-								}
-							}
-							if = {
-								limit = { NOT = { infrastructure >= 1 } }
-								set_local_variable = { name = stl_bf_friction value = 10 }
-							}
-
+						# friction for entering this neighbor
+						if = {
+							limit = { infrastructure >= 1 }
 							set_local_variable = {
-								name = stl_bf_new_dist
+								name = stl_bf_friction
 								value = {
-									value = local_var:stl_s_dist
-									add = local_var:stl_bf_friction
+									value = infrastructure_usage
+									divide = infrastructure
+									multiply = 5
 								}
 							}
+							if = {
+								limit = { NOT = { local_var:stl_bf_friction >= 1 } }
+								set_local_variable = { name = stl_bf_friction value = 1 }
+							}
+						}
+						if = {
+							limit = { NOT = { infrastructure >= 1 } }
+							set_local_variable = { name = stl_bf_friction value = 10 }
+						}
 
-							# relax: set if unknown or improved (prev = N inside origin block)
-							scope:stl_bf_origin = {
-								if = {
-									limit = {
-										OR = {
-											NOT = { is_key_in_variable_map = { name = stl_bf_dist key = prev } }
-											variable_map(stl_bf_dist|prev) > local_var:stl_bf_new_dist
-										}
-									}
-									add_to_variable_map = { name = stl_bf_dist key = prev value = local_var:stl_bf_new_dist }
+						set_local_variable = {
+							name = stl_bf_new_dist
+							value = {
+								value = local_var:stl_s_dist
+								add = local_var:stl_bf_friction
+							}
+						}
+
+						# relax: insert if unreached, improve if shorter
+						if = {
+							limit = {
+								OR = {
+									NOT = { has_variable = stl_bf_dist }
+									var:stl_bf_dist > local_var:stl_bf_new_dist
 								}
 							}
+							set_variable = { name = stl_bf_dist value = local_var:stl_bf_new_dist }
 						}
 					}
 				}
@@ -123,12 +107,21 @@ stl_run_bellman_ford = {
 	clear_saved_scope = stl_bf_origin
 }
 
-# Drop the origin's distance map. Cheap (single map on self) — call when done
-# so saves don't accumulate O(states) keys per state.
+# Remove stl_bf_dist from this state and every depot state in the market.
+# Must run after the distances were consumed; otherwise stale values leak
+# into the next origin's run and into saves.
 # Scope: state (same state that called stl_run_bellman_ford)
 stl_cleanup_bf_dist = {
 	if = {
-		limit = { has_variable_map = stl_bf_dist }
-		clear_variable_map = stl_bf_dist
+		limit = { has_variable = stl_bf_dist }
+		remove_variable = stl_bf_dist
+	}
+	market = {
+		every_scope_country = {
+			every_scope_state = {
+				limit = { has_variable = stl_bf_dist }
+				remove_variable = stl_bf_dist
+			}
+		}
 	}
 }

@@ -119,6 +119,7 @@ stl_phase_b_process_state = {
 	stl_run_bellman_ford = yes
 
 	# iterate reachable partners in the market, accumulate from their caches
+	# (stl_bf_dist is a plain variable on each reached partner)
 	owner = {
 		market = {
 			every_scope_country = {
@@ -127,19 +128,16 @@ stl_phase_b_process_state = {
 						has_variable = stl_trade_depot_ref
 						has_building = building_stl_trade_depot
 						NOT = { this = scope:stl_gravity_self }
-						scope:stl_gravity_self = {
-							is_key_in_variable_map = { name = stl_bf_dist key = prev }
-						}
+						has_variable = stl_bf_dist
+						NOT = { var:stl_bf_dist >= 100 }
 					}
 
-					# proximity weight = 100 - friction (skip unreachable)
-					scope:stl_gravity_self = {
-						set_local_variable = {
-							name = stl_pw
-							value = {
-								value = 100
-								subtract = variable_map(stl_bf_dist|prev)
-							}
+					# proximity weight = 100 - friction
+					set_local_variable = {
+						name = stl_pw
+						value = {
+							value = 100
+							subtract = var:stl_bf_dist
 						}
 					}
 					if = {

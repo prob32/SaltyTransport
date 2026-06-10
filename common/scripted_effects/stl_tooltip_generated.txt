@@ -31,20 +31,17 @@ stl_build_partner_display_for = {
 						limit = {
 							has_variable = stl_trade_depot_ref
 							NOT = { this = scope:stl_depot_state }
-							scope:stl_depot_state = {
-								is_key_in_variable_map = { name = stl_bf_dist key = prev }
-							}
+							has_variable = stl_bf_dist
+							NOT = { var:stl_bf_dist >= 100 }
 							has_variable = stl_econ_$GOODS$
 						}
 
-						# proximity weight from the click-chain BF map
-						scope:stl_depot_state = {
-							set_local_variable = {
-								name = stl_pw
-								value = {
-									value = 100
-									subtract = variable_map(stl_bf_dist|prev)
-								}
+						# proximity weight (stl_bf_dist is a variable on the partner)
+						set_local_variable = {
+							name = stl_pw
+							value = {
+								value = 100
+								subtract = var:stl_bf_dist
 							}
 						}
 						if = {
@@ -83,10 +80,7 @@ stl_build_partner_display_for = {
 								limit = { local_var:stl_wv > 0.01 }
 								set_variable = { name = stl_display_wv value = local_var:stl_wv }
 								set_variable = { name = stl_display_source_price value = local_var:stl_pp }
-								scope:stl_depot_state = {
-									set_local_variable = { name = stl_friction value = variable_map(stl_bf_dist|prev) }
-								}
-								set_variable = { name = stl_display_friction value = local_var:stl_friction }
+								set_variable = { name = stl_display_friction value = var:stl_bf_dist }
 								set_variable = { name = stl_display_weight value = local_var:stl_pw }
 								set_variable = { name = stl_display_has_rail value = 0 }
 								if = {

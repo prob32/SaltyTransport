@@ -82,8 +82,8 @@ description: Victoria 3 (1.13.x) modding workflow for this repo — validation h
 - Batch heavy monthly work across days (frozen queue on the market owner,
   windowed by a counter — iteration order is NOT stable across days).
 - Store building references in variables; never rescan `every_scope_building`.
-- Clear temporaries (`clear_variable_map`, `remove_variable`) — saves bloat
-  and lookups; absent == zero is the convention.
+- Clear temporaries (`remove_variable`, list clears) — saves bloat and
+  lookups; absent == zero is the convention.
 - error.log spam is itself a perf cost; fix every line.
 
 ## SaltyTransport specifics
@@ -92,9 +92,11 @@ description: Victoria 3 (1.13.x) modding workflow for this repo — validation h
   Economic model: TRADE_DISTRIBUTION.md.
 - Per-good state data: name-mangled VARIABLES (`stl_price_<good>`, ...) —
   the `vars` generator backend. Variable maps store values by REFERENCE
-  (local_var-sourced values die across chains; live-confirmed), so maps are
-  reserved for same-chain data: the BF distance map `stl_bf_dist` on the
-  ORIGIN keyed by state. GUI iterates the `stl_active_goods` flag list.
+  (live-confirmed twice: local_var-sourced values die across chains, and a
+  REUSED source local aliases every entry to one cell even same-chain), so
+  the runtime logic uses NO maps at all; BF distances are plain variables
+  on partner states. Variable LISTS of immortal targets (flags, states)
+  are safe. GUI iterates the `stl_active_goods` flag list.
 - Generator backend switch: `--storage=maps` exists for a future re-enable
   if probe step 9 ever reports PASS (cross-chain value persistence).
 - 1.13 migration table: PDX_SCRIPTING_GUIDE.md § 1.13 Migration Notes

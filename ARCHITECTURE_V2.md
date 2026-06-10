@@ -12,12 +12,14 @@ model, which v0.2 keeps; this document describes what changes structurally.
 4. Replace the codegen GUI with a standalone window + datamodel binding.
 5. Make the cycle robust for markets of any size and survive ownership churn.
 
-## 1. Data model: variable maps
+## 1. Data model
 
-Per-good state data moves from name-mangled variables
-(`stl_eff_export_grain`, … ≈ 550 vars/state) to **maps keyed by `flag:<good>`**:
+Per-good state data lives in name-mangled variables (`<container>_<good>`,
+e.g. `stl_eff_export_grain`), emitted by the generator's storage helpers
+(`--storage=vars`, the default — see the reality check below for why the
+planned variable-map backend was withdrawn):
 
-| Map (state scope)   | Value                                            | Written by |
+| Container (state scope) | Value                                        | Written by |
 |---------------------|--------------------------------------------------|------------|
 | `stl_price`         | cached local price estimate                      | B pre-pass |
 | `stl_econ`          | cached economy scale `max(buy, sell)`            | B pre-pass |
@@ -34,35 +36,28 @@ Per-good state data moves from name-mangled variables
 Plus one **variable list** per state, `stl_active_goods` (flag targets), holding
 the goods with any nonzero trade — the GUI iterates this instead of 49 fixed rows.
 
-Bellman-Ford distances move from a `stl_bf_dist` variable scattered across
-partner states to a map **on the origin**: `stl_bf_dist` keyed by state scopes.
-Cleanup becomes `clear_variable_map`, and concurrent tooltips can no longer
-collide with the monthly cycle.
-
-Access patterns (1.13.7 API):
-- write: `add_to_variable_map = { name = X key = <target> value = <value> }`
-- read: `variable_map(X|<key>)` (event-target link, usable like `var:`)
-- iterate: `every_key_in_variable_map = { name = X ... }`
-- clear: `clear_variable_map = X` / `remove_from_variable_map`
+Bellman-Ford distances are a plain `stl_bf_dist` variable on each reached
+partner state (insert-or-improve, no 999-init sweep), removed by a market
+cleanup sweep after each origin is consumed.
 
 **REALITY CHECK (live-tested, June 2026).** Runtime logs proved that
 `add_to_variable_map` stores its `value` as an event-target **reference,
-not a copied number**: values written from `local_var:` resolve fine within
-the same effect chain but read back as
-`Event target link 'local_var' returned an unset scope` from any other
-chain (1M+ errors before diagnosis). Consequently:
+not a copied number**. Two distinct failure modes followed:
 
-- **Per-good storage runs on the `vars` backend** (name-mangled variables;
-  `set_variable` copies values) — `tools/generate_goods.py` default.
-- **Maps are used only for same-chain data**: the Bellman-Ford distance map
-  `stl_bf_dist` (written, read and cleared inside one chain — proven clean
-  across 506 live runs) — plus the `stl_active_goods` variable *list*,
-  whose flag targets are immortal and safe to store.
-- Probe step 9 (two-run protocol) re-tests value persistence each patch;
-  if it ever reports PASS, the `--storage=maps` backend can be revisited.
-- Variable maps also remain absent from `script_docs` and vic3-tiger, so
-  the probe decision ("Salty Transport: Run Syntax Probe") stays the
-  authority on their behavior.
+1. Cross-chain reads of `local_var:`-sourced values die
+   (`Event target link 'local_var' returned an unset scope`, 1M+ errors) —
+   killed the per-good map storage.
+2. Even same-chain, a REUSED source local aliases every map entry to one
+   cell: the BF relaxation wrote `value = local_var:stl_bf_new_dist` per
+   edge, so every "distance" silently read back as the last edge computed —
+   killed the BF distance map (no errors, just wrong numbers).
+
+Consequently **variable maps are used nowhere in the mod's runtime logic**;
+the only remaining user is the syntax probe, whose step 9 (two-run
+protocol) re-tests value persistence each patch. If it ever reports PASS,
+the generator's `--storage=maps` backend can be revisited. Variable *lists*
+of immortal targets (flags, states) remain safe and in use
+(`stl_active_goods`, `stl_phase_b_queue`, `stl_display_partners`).
 
 ## 2. Monthly cycle (unchanged shape, hardened mechanics)
 
