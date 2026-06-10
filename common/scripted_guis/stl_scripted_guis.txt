@@ -39,3 +39,16 @@ stl_sgui_close_window = {
 	}
 	ai_is_valid = { always = no }
 }
+
+# Does this state trade anything at all? (drives the window's empty-state text)
+stl_sgui_has_trade = {
+	scope = state
+	is_shown = { always = yes }
+	is_valid = {
+		variable_list_size = {
+			name = stl_active_goods
+			value >= 1
+		}
+	}
+	ai_is_valid = { always = no }
+}
