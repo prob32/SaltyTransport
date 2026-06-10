@@ -1,5 +1,15 @@
 # Salty Transport -- Trade Distribution Guide
 
+> **v0.2 NOTE**: the economic model described here (effective surplus,
+> direction-aware targets, EMA/conservation/transport, friction pathfinding)
+> is unchanged and this document remains its reference. The *implementation*
+> was rearchitected for Vic3 1.13.7+ — per-good storage now lives in variable
+> maps, Phase B reads a once-per-cycle price cache instead of recomputing
+> per pair, batching is queue-based (no 104-state cap), and the GUI is a
+> standalone window. See **ARCHITECTURE_V2.md** for what changed and why;
+> where file names or variable tables below disagree with it,
+> ARCHITECTURE_V2.md wins.
+
 ## Overview
 
 Salty Transport replaces Victoria 3's vanilla MAPI (Market Access Price Impact) system with
@@ -7,7 +17,7 @@ directional internal trade between states within a country. Instead of MAPI abst
 blending prices toward a market average, a **Trade Depot** building in each state physically
 buys and sells goods to move them between states.
 
-**Version**: 0.1.0 | **Target**: Vic3 1.12.* | **Goods**: all 49 tradeable goods
+**Version**: 0.2.0 | **Target**: Vic3 1.13.7+ | **Goods**: 47 tradeable goods (manowars/ironclads removed from use in 1.13)
 
 ---
 

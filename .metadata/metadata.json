@@ -1,0 +1,15 @@
+{
+	"name": "Salty Transport - Internal Trade Logistics",
+	"id": "",
+	"version": "0.2.0",
+	"supported_game_version": "1.13.*",
+	"short_description": "Replaces MAPI with directional internal trade: Trade Depots physically move goods between states over the infrastructure network.",
+	"tags": [
+		"Gameplay",
+		"Economy"
+	],
+	"relationships": [],
+	"game_custom_data": {
+		"multiplayer_synchronized": true
+	}
+}

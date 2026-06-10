@@ -1,0 +1,248 @@
+﻿# ========================================
+# SALTY TRANSPORT - Internal Trade window (v2)
+#
+# Standalone movable window registered via gui/scripted_widgets/stl_widgets.txt
+# (no vanilla file is overridden). Opened by stl_sgui_open_window, which sets
+# var:stl_window_state on the player country; closed by stl_sgui_close_window.
+#
+# Interim opener until the depot-panel button lands (needs vanilla 1.13 gui
+# sources): select your country in console and run
+#   effect set_variable = { name = stl_window_state value = capital }
+#
+# Data flow:
+#   rows     = State.MakeScope.GetList('stl_active_goods')   (flag targets)
+#   row data = State.MakeScope.ScriptValue(Concatenate('stl_gui_<metric>_', Goods.GetKey))
+#   partners = State.MakeScope.GetList('stl_display_partners') after a
+#              stl_sgui_show_*_partners click (BF runs on click, not hover)
+# ========================================
+
+@stl_win_w       = 760
+@stl_col_good    = 170
+@stl_col_num     = 78
+@stl_row_h       = 26
+
+window = {
+	name = "stl_trade_window"
+	parentanchor = top|left
+	position = { 480 120 }
+	size = { @stl_win_w -1 }
+	layer = windows_layer
+	filter_mouse = all
+	allow_outside = yes
+	movable = yes
+
+	using = Window_Background
+	using = Window_Decoration
+
+	datacontext = "[GetPlayer]"
+	visible = "[Country.MakeScope.Var('stl_window_state').IsSet]"
+	datacontext = "[Country.MakeScope.Var('stl_window_state').GetState]"
+
+	state = { name = _show using = Animation_FadeIn_Quick }
+	state = { name = _hide using = Animation_FadeOut_Quick }
+
+	vbox = {
+		restrictparent_min = yes
+		using = Window_Margins
+
+		header_pattern = {
+			layoutpolicy_horizontal = expanding
+			blockoverride "header_text" {
+				text = "stl_trade_window_title"
+			}
+			blockoverride "button_close" {
+				onclick = "[GetScriptedGui('stl_sgui_close_window').Execute(GuiScope.SetRoot(Country.MakeScope).End)]"
+			}
+		}
+
+		# state name subtitle
+		textbox = {
+			layoutpolicy_horizontal = expanding
+			autoresize = yes
+			align = center
+			using = fontstyle_heading_2
+			text = "[State.GetName]"
+		}
+
+		# ----- column headers -----
+		hbox = {
+			layoutpolicy_horizontal = expanding
+			textbox = { minimumsize = { @stl_col_good @stl_row_h } align = left   text = "stl_trade_window_col_good" }
+			textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right  text = "stl_trade_window_col_amount" }
+			textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right  text = "stl_trade_window_col_target" }
+			textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right  text = "stl_trade_window_col_access" }
+			textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right  text = "stl_trade_window_col_local" }
+			textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right  text = "stl_trade_window_col_market" }
+			textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right  text = "stl_trade_window_col_transport" }
+		}
+
+		# ----- goods rows (one per actively traded good) -----
+		scrollarea = {
+			layoutpolicy_horizontal = expanding
+			minimumsize = { -1 220 }
+			maximumsize = { -1 420 }
+			scrollbarpolicy_horizontal = always_off
+
+			scrollwidget = {
+				dynamicgridbox = {
+					datamodel = "[State.MakeScope.GetList('stl_active_goods')]"
+
+					item = {
+						widget = {
+							datacontext = "[GetGoods(Scope.GetFlagName)]"
+							size = { @stl_win_w @stl_row_h }
+
+							hbox = {
+								# good icon + name; clicking shows import partners,
+								# right-side button shows export partners
+								hbox = {
+									minimumsize = { @stl_col_good @stl_row_h }
+									icon = {
+										size = { 24 24 }
+										texture = "[Goods.GetTexture]"
+									}
+									textbox = {
+										layoutpolicy_horizontal = expanding
+										align = left
+										text = "[Goods.GetName]"
+									}
+								}
+								# net trade: positive = exporting, negative = importing
+								textbox = {
+									minimumsize = { @stl_col_num @stl_row_h }
+									align = right
+									text = "[State.MakeScope.ScriptValue(Concatenate('stl_gui_trade_', Goods.GetKey))|0=]"
+								}
+								textbox = {
+									minimumsize = { @stl_col_num @stl_row_h }
+									align = right
+									text = "[State.MakeScope.ScriptValue(Concatenate('stl_gui_target_', Goods.GetKey))|0=]"
+								}
+								textbox = {
+									minimumsize = { @stl_col_num @stl_row_h }
+									align = right
+									text = "[State.MakeScope.ScriptValue(Concatenate('stl_gui_access_', Goods.GetKey))|0]%"
+								}
+								textbox = {
+									minimumsize = { @stl_col_num @stl_row_h }
+									align = right
+									text = "£[State.MakeScope.ScriptValue(Concatenate('stl_gui_local_price_', Goods.GetKey))|1]"
+								}
+								textbox = {
+									minimumsize = { @stl_col_num @stl_row_h }
+									align = right
+									text = "£[State.MakeScope.ScriptValue(Concatenate('stl_gui_market_price_', Goods.GetKey))|1]"
+								}
+								textbox = {
+									minimumsize = { @stl_col_num @stl_row_h }
+									align = right
+									text = "[State.MakeScope.ScriptValue(Concatenate('stl_gui_transport_', Goods.GetKey))|0]"
+								}
+								# partner breakdown buttons
+								button = {
+									size = { 24 24 }
+									using = default_button
+									tooltip = "stl_trade_window_btn_import_tt"
+									text = "I"
+									onclick = "[GetScriptedGui('stl_sgui_show_import_partners').Execute(GuiScope.SetRoot(State.MakeScope).AddScope('stl_goods_flag', MakeScopeFlag(Goods.GetKey)).End)]"
+								}
+								button = {
+									size = { 24 24 }
+									using = default_button
+									tooltip = "stl_trade_window_btn_export_tt"
+									text = "E"
+									onclick = "[GetScriptedGui('stl_sgui_show_export_partners').Execute(GuiScope.SetRoot(State.MakeScope).AddScope('stl_goods_flag', MakeScopeFlag(Goods.GetKey)).End)]"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		# empty state
+		textbox = {
+			layoutpolicy_horizontal = expanding
+			autoresize = yes
+			align = center
+			text = "stl_trade_window_no_trade"
+			visible = "[Not(DataModelHasItems(State.MakeScope.GetList('stl_active_goods')))]"
+		}
+
+		# ----- partner breakdown (filled by stl_sgui_show_*_partners) -----
+		vbox = {
+			layoutpolicy_horizontal = expanding
+			visible = "[DataModelHasItems(State.MakeScope.GetList('stl_display_partners'))]"
+
+			divider_clean = {
+				layoutpolicy_horizontal = expanding
+			}
+			textbox = {
+				layoutpolicy_horizontal = expanding
+				autoresize = yes
+				align = left
+				using = fontstyle_heading_2
+				text = "stl_trade_window_partners"
+			}
+			hbox = {
+				layoutpolicy_horizontal = expanding
+				textbox = { minimumsize = { @stl_col_good @stl_row_h } align = left  text = "stl_trade_window_col_partner" }
+				textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right text = "stl_trade_window_col_friction" }
+				textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right text = "stl_trade_window_col_weight" }
+				textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right text = "stl_trade_window_col_price" }
+				textbox = { minimumsize = { @stl_col_num  @stl_row_h } align = right text = "stl_trade_window_col_share" }
+			}
+			scrollarea = {
+				layoutpolicy_horizontal = expanding
+				minimumsize = { -1 90 }
+				maximumsize = { -1 240 }
+				scrollbarpolicy_horizontal = always_off
+
+				scrollwidget = {
+					dynamicgridbox = {
+						datamodel = "[State.MakeScope.GetList('stl_display_partners')]"
+						item = {
+							widget = {
+								datacontext = "[Scope.GetState]"
+								size = { @stl_win_w @stl_row_h }
+								hbox = {
+									textbox = {
+										minimumsize = { @stl_col_good @stl_row_h }
+										align = left
+										text = "[State.GetName]"
+									}
+									textbox = {
+										minimumsize = { @stl_col_num @stl_row_h }
+										align = right
+										text = "[State.MakeScope.ScriptValue('stl_sv_display_friction')|0]"
+									}
+									textbox = {
+										minimumsize = { @stl_col_num @stl_row_h }
+										align = right
+										text = "[State.MakeScope.ScriptValue('stl_sv_display_weight')|0]"
+									}
+									textbox = {
+										minimumsize = { @stl_col_num @stl_row_h }
+										align = right
+										text = "£[State.MakeScope.ScriptValue('stl_sv_display_source_price')|1]"
+									}
+									textbox = {
+										minimumsize = { @stl_col_num @stl_row_h }
+										align = right
+										text = "[State.MakeScope.ScriptValue('stl_sv_display_contribution')|0]%"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			button = {
+				size = { 160 26 }
+				using = default_button
+				text = "stl_trade_window_clear"
+				onclick = "[GetScriptedGui('stl_sgui_clear_display').Execute(GuiScope.SetRoot(State.MakeScope).End)]"
+			}
+		}
+	}
+}

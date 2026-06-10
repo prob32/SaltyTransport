@@ -1,8 +1,0 @@
-﻿# ========================================
-# UNIFORM DISTRIBUTION FALLBACK
-# (Deprecated — fallback is now handled per-state in Phase C sub-pass 3d)
-# ========================================
-
-stl_uniform_distribute = {
-	# No-op: per-state fallback in Phase C handles states without gravity data
-}

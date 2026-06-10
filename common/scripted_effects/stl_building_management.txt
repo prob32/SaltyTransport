@@ -1,5 +1,5 @@
 ﻿# ========================================
-# TRADE DEPOT BUILDING MANAGEMENT
+# TRADE DEPOT BUILDING MANAGEMENT (v2)
 # MAPI is zeroed via urban_planning technology modifier (instant)
 # Buildings created in common/history/buildings/stl_global.txt at game start
 # This effect handles: caching refs, applying modifiers, and mid-game safety net
@@ -50,32 +50,58 @@ stl_ensure_depot_exists = {
 	}
 }
 
-# Ensure exactly one port hub exists per market area
-# Variable flag on market owner prevents duplicate creation across months
+# Ensure exactly one port hub exists per market.
+# v2: scans for the building itself every month instead of trusting a
+# one-shot flag (the v0.1 flag broke when the market owner changed or the
+# hub state was lost; it also could not detect market merges leaving two hubs).
 # Scope: country (market owner only)
 stl_ensure_port_hub_for_market = {
 	if = {
-		limit = {
-			this = market.owner
-			NOT = { has_variable = stl_port_hub_placed }
-			any_scope_state = {
-				has_port = yes
+		limit = { this = market.owner }
+
+		set_local_variable = { name = stl_hub_count value = 0 }
+		market = {
+			every_scope_country = {
+				every_scope_state = {
+					limit = {
+						any_scope_building = {
+							is_building_type = building_stl_port_hub
+						}
+					}
+					change_local_variable = { name = stl_hub_count add = 1 }
+					# market merge can leave several hubs; keep only the first
+					if = {
+						limit = { local_var:stl_hub_count >= 2 }
+						remove_building = building_stl_port_hub
+						change_local_variable = { name = stl_hub_count subtract = 1 }
+					}
+				}
 			}
 		}
-		random_scope_state = {
-			limit = { has_port = yes }
-			create_building = {
-				building = building_stl_port_hub
-				level = 1
-				reserves = 1
-				subsidized = yes
+
+		# none present: place one in a port state of the owner
+		if = {
+			limit = {
+				NOT = { local_var:stl_hub_count >= 1 }
+				any_scope_state = {
+					has_port_state = yes
+				}
+			}
+			random_scope_state = {
+				limit = { has_port_state = yes }
+				create_building = {
+					building = building_stl_port_hub
+					level = 1
+					reserves = 1
+					subsidized = yes
+				}
 			}
 		}
-		set_variable = { name = stl_port_hub_placed value = 1 }
 	}
 }
 
-# Initialize depots across all states of a country
+# Initialize depots across all states of a country.
+# Idempotent; runs at game start, monthly, and yearly as a safety net.
 # Scope: country
 stl_initialize_all_depots = {
 	# Initialize debug mode off by default (suppresses "never set" warning)
@@ -84,11 +110,15 @@ stl_initialize_all_depots = {
 		set_global_variable = { name = stl_debug_mode value = 0 }
 	}
 
-	# Reset phase counters for the new monthly cycle (market owner only)
+	# Reset phase progress for the new monthly cycle (market owner only)
 	if = {
 		limit = { this = market.owner }
 		set_variable = { name = stl_bf_batch_counter value = 0 }
 		set_variable = { name = stl_phase_c_batch_idx value = 0 }
+		if = {
+			limit = { has_variable = stl_phase_b_started }
+			remove_variable = stl_phase_b_started
+		}
 	}
 
 	# Ensure depots exist in ALL states (including non-owner countries)
@@ -96,6 +126,6 @@ stl_initialize_all_depots = {
 		stl_ensure_depot_exists = yes
 	}
 
-	# Ensure port hub in the world market hub state (one per market)
+	# Ensure exactly one port hub per market
 	stl_ensure_port_hub_for_market = yes
 }

@@ -1,8 +1,14 @@
-# Paradox Clausewitz Scripting Guide for Victoria 3 (1.12)
+# Paradox Clausewitz Scripting Guide for Victoria 3 (1.13)
 
 A practical reference for modders working with Victoria 3's scripting engine.
 Covers syntax rules, common patterns, pitfalls, and working examples from the
 Salty Transport mod.
+
+> Updated for 1.13.x. Headless API reference: the Modding Co-op digests repo
+> (github.com/Victoria-3-Modding-Co-op/Modding-Digests) ships the game's own
+> `script_docs` dumps per patch under `<version>/docs/` — grep those instead
+> of guessing. Validation: `tools/validate.sh` (vic3-tiger). Structural lint
+> without game files: `python3 tools/lint_pdx.py`.
 
 ---
 
@@ -108,6 +114,42 @@ if = {
     # safe to read local_var:my_temp
 }
 ```
+
+### Variable Maps (1.13.7+)
+
+Keyed containers — the same system as EU5. Keys are event targets (scopes or
+`flag:` targets); values are numbers or targets. Local/global variants exist
+(`add_to_local_variable_map`, `add_to_global_variable_map`, ...).
+
+```
+# write / overwrite one key
+add_to_variable_map = { name = my_map key = flag:grain value = 42 }
+add_to_variable_map = { name = my_map key = scope:some_state value = 7 }
+
+# read (event-target link, works in triggers and value blocks)
+variable_map(my_map|flag:grain) >= 10
+set_local_variable = { name = x value = variable_map(my_map|flag:grain) }
+scope:other.variable_map(my_map|prev)        # scoped chain + dynamic key
+
+# existence / size / membership
+has_variable_map = my_map
+variable_map_size = { name = my_map value >= 3 }
+is_key_in_variable_map = { name = my_map key = flag:grain }
+
+# remove / clear / iterate
+remove_from_variable_map = { name = my_map key = flag:grain }
+clear_variable_map = my_map
+every_key_in_variable_map = { name = my_map <effects on each key scope> }
+```
+
+**CAVEATS**: these are missing from the game's own `script_docs` dump and
+from vic3-tiger (as of v1.19.0), so they cannot be machine-validated. Run
+`effect stl_probe_variable_maps = yes` in-game (console, with a state
+selected) after each game patch — it exercises every operation above and
+logs PASS/FAIL lines to debug.log. GUI data functions exist only for GLOBAL
+maps (`GetVariableFromGlobalVariableMap`, `GetGlobalMapKeys`, ...); for
+state/country maps, bind through script values that read
+`variable_map(...)`.
 
 ---
 
@@ -220,24 +262,14 @@ change_local_variable = {
 
 ### Comparison Operators
 
-Clausewitz has only two comparison forms:
+All of `>`, `>=`, `<`, `<=`, `=`, `!=` are valid in triggers (the game's own
+script_docs use `state_goods_consumption < X`). NOT-inversion also works and
+is common in older code:
 
 ```
-# Greater than or equal (>=)
 var:my_var >= 10
-
-# Greater than (>)
-var:my_var > 10
-```
-
-For less-than, invert with NOT:
-
-```
-# Less than 10 (NOT >= 10)
-NOT = { var:my_var >= 10 }
-
-# Less than or equal to 10 (NOT > 10)
-NOT = { var:my_var > 10 }
+var:my_var < 10              # supported
+NOT = { var:my_var >= 10 }   # equivalent less-than idiom
 ```
 
 ### Boolean Logic
@@ -1062,6 +1094,26 @@ every_scope_state = {
     }
 }
 ```
+
+---
+
+## 1.13 Migration Notes
+
+| Pre-1.13 | 1.13.x | Notes |
+|----------|--------|-------|
+| `has_port` (state) | `has_port_state` | also new: `has_port_country`, `has_port_market` |
+| convoys | gone | Merchant Marine covers civilian shipping; Supply Ships cover military |
+| Man-o-War / Ironclad goods | removed from use | modifier types still registered; nothing produces/consumes them |
+| `is_ruler` / `is_heir` | `is_ruler_of_own_country` / `is_heir_of_own_country` | character role rework |
+| canals (`canal_type`) | straits (`common/strait_definitions`) | canal *buildings* remain |
+| — | variable maps | added in hotfix 1.13.7 (see section above) |
+| — | journal entry `widget = {}` GUI injection | sanctioned custom-GUI anchor points |
+
+GUI files modified by 1.13 (full-file overrides of these are stale):
+`building_details_panel.gui`, `goods_panel.gui`, `market_panel.gui`,
+`production_methods.gui`, `topbar.gui`, and more. Prefer scripted widgets
+(`gui/scripted_widgets/`) and `000_`-prefixed type overrides (GUI types are
+first-loaded-wins, opposite of script's last-wins).
 
 ---
 

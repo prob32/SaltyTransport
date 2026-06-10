@@ -32,3 +32,46 @@ stl_transport_multiplier = {
 	value = local_var:stl_transport_amount
 	min = 0
 }
+
+# === Partner display bindings (scope: partner state) ===
+# Bound from the trade window's partner list rows.
+
+stl_sv_display_wv = {
+	value = 0
+	if = {
+		limit = { has_variable = stl_display_wv }
+		add = var:stl_display_wv
+	}
+}
+
+stl_sv_display_friction = {
+	value = 0
+	if = {
+		limit = { has_variable = stl_display_friction }
+		add = var:stl_display_friction
+	}
+}
+
+stl_sv_display_weight = {
+	value = 0
+	if = {
+		limit = { has_variable = stl_display_weight }
+		add = var:stl_display_weight
+	}
+}
+
+stl_sv_display_source_price = {
+	value = 0
+	if = {
+		limit = { has_variable = stl_display_source_price }
+		add = var:stl_display_source_price
+	}
+}
+
+stl_sv_display_contribution = {
+	value = 0
+	if = {
+		limit = { has_variable = stl_display_contribution_pct }
+		add = var:stl_display_contribution_pct
+	}
+}

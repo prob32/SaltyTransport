@@ -1,0 +1,142 @@
+﻿# ========================================
+# VARIABLE MAP SYNTAX PROBE
+#
+# Variable maps (1.13.7) are absent from the game's script_docs dump and
+# from vic3-tiger, so this mod's use of them cannot be machine-validated.
+# Run this in-game ONCE per game version before trusting a build:
+#
+#   1. Launch with -debug_mode, select any state on the map
+#   2. Console:  effect stl_probe_variable_maps = yes
+#   3. Check Documents/Paradox Interactive/Victoria 3/logs/debug.log
+#      for lines starting with [STL PROBE]; every step must say PASS.
+#      Any script errors land in error.log.
+#
+# Exercises every map operation the mod relies on:
+#   add_to_variable_map (flag + scope keys), is_key_in_variable_map,
+#   variable_map(name|key) reads (own scope, scoped chain, dynamic scope key),
+#   remove_from_variable_map, clear_variable_map, has_variable_map,
+#   flag-keyed maps matching MakeScopeFlag-style flag targets.
+#
+# Scope: state (run from map selection)
+# ========================================
+
+stl_probe_variable_maps = {
+	debug_log = "[STL PROBE] starting variable map probe"
+
+	# --- 1. flag-keyed write + read ---
+	add_to_variable_map = { name = stl_probe_map key = flag:grain value = 42 }
+	if = {
+		limit = { is_key_in_variable_map = { name = stl_probe_map key = flag:grain } }
+		debug_log = "[STL PROBE] PASS 1a: is_key_in_variable_map (flag key)"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 1a: flag key not found after add_to_variable_map"
+	}
+	if = {
+		limit = { variable_map(stl_probe_map|flag:grain) >= 42 }
+		debug_log = "[STL PROBE] PASS 1b: variable_map(name|flag) read in trigger"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 1b: variable_map(name|flag) trigger read"
+	}
+	set_local_variable = { name = stl_probe value = variable_map(stl_probe_map|flag:grain) }
+	if = {
+		limit = { local_var:stl_probe >= 42 }
+		debug_log = "[STL PROBE] PASS 1c: variable_map read into local variable"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 1c: variable_map -> set_local_variable"
+	}
+
+	# --- 2. value-block read (arithmetic on a map value) ---
+	set_local_variable = {
+		name = stl_probe2
+		value = {
+			value = variable_map(stl_probe_map|flag:grain)
+			multiply = 2
+		}
+	}
+	if = {
+		limit = { local_var:stl_probe2 >= 84 }
+		debug_log = "[STL PROBE] PASS 2: variable_map inside value block math"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 2: variable_map inside value block math"
+	}
+
+	# --- 3. scope-keyed write + read + dynamic key (prev) ---
+	save_scope_as = stl_probe_self
+	random_neighbouring_state = {
+		scope:stl_probe_self = {
+			add_to_variable_map = { name = stl_probe_smap key = prev value = 7 }
+			if = {
+				limit = { is_key_in_variable_map = { name = stl_probe_smap key = prev } }
+				debug_log = "[STL PROBE] PASS 3a: scope-keyed map with dynamic key (prev)"
+			}
+			else = {
+				debug_log = "[STL PROBE] FAIL 3a: scope-keyed map with dynamic key (prev)"
+			}
+			if = {
+				limit = { variable_map(stl_probe_smap|prev) >= 7 }
+				debug_log = "[STL PROBE] PASS 3b: variable_map read with dynamic key (prev)"
+			}
+			else = {
+				debug_log = "[STL PROBE] FAIL 3b: variable_map read with dynamic key (prev)"
+			}
+		}
+	}
+
+	# --- 4. scoped chain read (scope:x.variable_map(...)) ---
+	set_local_variable = { name = stl_probe4 value = scope:stl_probe_self.variable_map(stl_probe_map|flag:grain) }
+	if = {
+		limit = { local_var:stl_probe4 >= 42 }
+		debug_log = "[STL PROBE] PASS 4: scope-prefixed variable_map chain read"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 4: scope-prefixed variable_map chain read"
+	}
+
+	# --- 5. remove + clear + has ---
+	remove_from_variable_map = { name = stl_probe_map key = flag:grain }
+	if = {
+		limit = { NOT = { is_key_in_variable_map = { name = stl_probe_map key = flag:grain } } }
+		debug_log = "[STL PROBE] PASS 5a: remove_from_variable_map"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 5a: remove_from_variable_map"
+	}
+	add_to_variable_map = { name = stl_probe_map key = flag:coal value = 1 }
+	if = {
+		limit = { has_variable_map = stl_probe_map }
+		clear_variable_map = stl_probe_map
+		debug_log = "[STL PROBE] PASS 5b: has_variable_map + clear_variable_map"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 5b: has_variable_map after add"
+	}
+
+	# --- 6. iteration over keys ---
+	add_to_variable_map = { name = stl_probe_map key = flag:iron value = 3 }
+	add_to_variable_map = { name = stl_probe_map key = flag:coal value = 4 }
+	set_local_variable = { name = stl_probe_n value = 0 }
+	every_key_in_variable_map = {
+		name = stl_probe_map
+		change_local_variable = { name = stl_probe_n add = 1 }
+	}
+	if = {
+		limit = { local_var:stl_probe_n >= 2 }
+		debug_log = "[STL PROBE] PASS 6: every_key_in_variable_map iterated keys"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 6: every_key_in_variable_map"
+	}
+
+	# --- cleanup ---
+	clear_variable_map = stl_probe_map
+	if = {
+		limit = { has_variable_map = stl_probe_smap }
+		clear_variable_map = stl_probe_smap
+	}
+	clear_saved_scope = stl_probe_self
+	debug_log = "[STL PROBE] done - if every step above says PASS, the maps backend is safe"
+}

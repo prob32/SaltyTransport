@@ -1,0 +1,1 @@
+﻿gui/stl_trade_window.gui = stl_trade_window
