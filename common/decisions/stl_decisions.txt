@@ -1,0 +1,68 @@
+﻿# ========================================
+# SALTY TRANSPORT - debug decisions
+#
+# Vic3's console has no generic effect-runner (unlike CK3), so debug
+# actions are exposed as player decisions instead (country panel >
+# Decisions tab). Hidden from AI via is_shown + ai_chance 0.
+# ========================================
+
+# Run the variable-map syntax probe (see stl_probe.txt). Results land in
+# Documents/Paradox Interactive/Victoria 3/logs/debug.log as [STL PROBE].
+stl_run_probe_decision = {
+	is_shown = {
+		is_player = yes
+	}
+	possible = {
+		always = yes
+	}
+	when_taken = {
+		if = {
+			limit = {
+				any_scope_state = {
+					any_neighbouring_state = {
+						always = yes
+					}
+				}
+			}
+			random_scope_state = {
+				limit = {
+					any_neighbouring_state = {
+						always = yes
+					}
+				}
+				stl_probe_variable_maps = yes
+			}
+		}
+		else = {
+			# island microstate: neighbor step (3) will not log, rest works
+			capital = {
+				stl_probe_variable_maps = yes
+			}
+		}
+	}
+	ai_chance = {
+		value = 0
+	}
+}
+
+# Toggle Salty Transport diagnostic modifiers on the Trade Depots.
+stl_toggle_debug_decision = {
+	is_shown = {
+		is_player = yes
+	}
+	possible = {
+		always = yes
+	}
+	when_taken = {
+		if = {
+			limit = { global_var:stl_debug_mode >= 1 }
+			set_global_variable = { name = stl_debug_mode value = 0 }
+		}
+		else = {
+			set_global_variable = { name = stl_debug_mode value = 1 }
+		}
+	}
+	ai_chance = {
+		value = 0
+	}
+}

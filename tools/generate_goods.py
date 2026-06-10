@@ -267,7 +267,7 @@ def gen_goods_modifiers():
 def gen_debug_modifiers():
     L = [AUTOGEN,
          "# Diagnostic modifiers, applied only when stl_debug_mode global = 1.",
-         "# Toggle: effect set_global_variable = { name = stl_debug_mode value = 1 }",
+         "# Toggle via the decision: Salty Transport: Toggle Debug Modifiers",
          ""]
     for g in names():
         L += [f"stl_debug_base_{g} = {{", f"\ticon = {ICON}", "\tbuilding_employment_laborers_add = 0.001", "}", ""]
@@ -1182,6 +1182,14 @@ def gen_localization():
          ' stl_trade_window_btn_import_tt:0 "Show where imports of this good come from"',
          ' stl_trade_window_btn_export_tt:0 "Show where exports of this good go"',
          ' stl_trade_window_clear:0 "Clear"',
+         "",
+         " # === debug decisions ===",
+         ' stl_run_probe_decision:0 "Salty Transport: Run Syntax Probe"',
+         ' stl_run_probe_decision_desc:0 "Exercises every variable-map operation the mod relies on and writes PASS/FAIL lines to debug.log. Run once per game patch; see ARCHITECTURE_V2.md."',
+         ' stl_run_probe_decision_tooltip:0 "Writes STL PROBE results to logs/debug.log"',
+         ' stl_toggle_debug_decision:0 "Salty Transport: Toggle Debug Modifiers"',
+         ' stl_toggle_debug_decision_desc:0 "Shows diagnostic base/access modifiers on every Trade Depot. Purely informational; applied on the next Phase C day."',
+         ' stl_toggle_debug_decision_tooltip:0 "Toggles stl_debug_mode for depot diagnostics"',
          ""]
     for (g, disp, _b, _t, _c, _en) in enabled_goods():
         L.append(f' stl_export_{g}:0 "{disp} Exports"')

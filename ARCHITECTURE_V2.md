@@ -47,9 +47,10 @@ Access patterns (1.13.7 API):
 
 **Risk + fallback.** Variable maps are absent from the game's own `script_docs`
 dump and from vic3-tiger v1.19.0, so they cannot be machine-validated yet.
-Mitigations: (a) `events/stl_probe.txt` ships a console-triggered syntax probe
-that exercises every map operation and logs results — run it in-game before
-trusting a build; (b) `tools/generate_goods.py` has a `STORAGE` switch
+Mitigations: (a) `common/scripted_effects/stl_probe.txt` ships a syntax probe
+that exercises every map operation and logs results — fire it via the
+decision "Salty Transport: Run Syntax Probe" before trusting a build;
+(b) `tools/generate_goods.py` has a `STORAGE` switch
 (`maps` | `vars`) that regenerates the entire storage layer in the legacy
 name-mangled form if maps misbehave; hand-written files access storage only
 through generated helper effects so the switch is total.

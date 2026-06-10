@@ -5,9 +5,11 @@
 # from vic3-tiger, so this mod's use of them cannot be machine-validated.
 # Run this in-game ONCE per game version before trusting a build:
 #
-#   1. Launch with -debug_mode, select any state on the map
-#   2. Console:  effect stl_probe_variable_maps = yes
-#   3. Check Documents/Paradox Interactive/Victoria 3/logs/debug.log
+#   1. Take the decision "Salty Transport: Run Syntax Probe"
+#      (country panel > Decisions; defined in common/decisions/stl_decisions.txt —
+#      Vic3's console has no generic effect-runner, so decisions are the
+#      sanctioned way to fire script by hand)
+#   2. Check Documents/Paradox Interactive/Victoria 3/logs/debug.log
 #      for lines starting with [STL PROBE]; every step must say PASS.
 #      Any script errors land in error.log.
 #

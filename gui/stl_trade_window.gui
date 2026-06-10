@@ -2,12 +2,10 @@
 # SALTY TRANSPORT - Internal Trade window (v2)
 #
 # Standalone movable window registered via gui/scripted_widgets/stl_widgets.txt
-# (no vanilla file is overridden). Opened by stl_sgui_open_window, which sets
-# var:stl_window_state on the player country; closed by stl_sgui_close_window.
-#
-# Interim opener until the depot-panel button lands (needs vanilla 1.13 gui
-# sources): select your country in console and run
-#   effect set_variable = { name = stl_window_state value = capital }
+# (no vanilla file is overridden). Opened by stl_sgui_open_window — wired to
+# the trade button on the depot's building panel (gui/000_stl_building_panel.gui),
+# which sets var:stl_window_state on the player country; closed by
+# stl_sgui_close_window.
 #
 # Data flow:
 #   rows     = State.MakeScope.GetList('stl_active_goods')   (flag targets)

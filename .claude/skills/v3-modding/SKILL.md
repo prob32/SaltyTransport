@@ -15,8 +15,10 @@ description: Victoria 3 (1.13.x) modding workflow for this repo — validation h
 3. `tools/validate.sh --new` — vic3-tiger against vanilla (needs game files
    at `$VIC3_GAME_DIR`); shows only regressions vs the committed baseline.
 4. In-game (user runs with `-debug_mode`): check `error.log`, and after any
-   game patch run the console probe `effect stl_probe_variable_maps = yes`
-   (variable maps are invisible to tiger and to script_docs).
+   game patch take the decision "Salty Transport: Run Syntax Probe"
+   (variable maps are invisible to tiger and to script_docs). NOTE: Vic3's
+   console has NO generic `effect` command — ship hand-fired script as
+   decisions, never as console instructions.
 
 ## Offline API reference (no game install needed)
 

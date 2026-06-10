@@ -143,11 +143,11 @@ every_key_in_variable_map = { name = my_map <effects on each key scope> }
 ```
 
 **CAVEATS**: these are missing from the game's own `script_docs` dump and
-from vic3-tiger (as of v1.19.0), so they cannot be machine-validated. Run
-`effect stl_probe_variable_maps = yes` in-game (console, with a state
-selected) after each game patch — it exercises every operation above and
-logs PASS/FAIL lines to debug.log. GUI data functions exist only for GLOBAL
-maps (`GetVariableFromGlobalVariableMap`, `GetGlobalMapKeys`, ...); for
+from vic3-tiger (as of v1.19.0), so they cannot be machine-validated. After
+each game patch, take the in-game decision "Salty Transport: Run Syntax
+Probe" — it exercises every operation above and logs PASS/FAIL lines to
+debug.log. GUI data functions exist only for GLOBAL maps
+(`GetVariableFromGlobalVariableMap`, `GetGlobalMapKeys`, ...); for
 state/country maps, bind through script values that read
 `variable_map(...)`.
 
@@ -1117,20 +1117,28 @@ first-loaded-wins, opposite of script's last-wins).
 
 ---
 
-## Useful Console Commands
+## Running Script By Hand / Useful Console Commands
+
+**Vic3's console has NO generic effect-runner** (`effect ...` is a CK3
+command; Vic3 replies "Unknown command"). To fire arbitrary script in-game,
+ship it as a **decision** (`common/decisions`, country scope, one click in
+the country panel) or a debug-gated event. This mod does exactly that:
+
+- "Salty Transport: Run Syntax Probe" — variable-map syntax probe
+- "Salty Transport: Toggle Debug Modifiers" — stl_debug_mode toggle
+
+Console commands that DO exist (with `-debug_mode`):
 
 ```
-# Set a global variable (toggle debug mode)
-effect set_global_variable = { name = stl_debug_mode value = 1 }
-
-# Read a variable on the selected state
-effect = { log = "var: [This.GetVariable('stl_last_export_coal')]" }
-
-# Trigger an event
-effect trigger_event = { id = stl_events.3 }
-
-# Examine building modifiers (open building detail panel in game)
+script_docs      # dump effects/triggers/scopes docs to Documents/.../docs
+DumpDataTypes    # dump GUI data types/functions to the same place
+gui_editor       # inspect the widget tree (do NOT save from it)
+switchlanguage english   # force-reload localization
+observe          # release control / observer mode
 ```
+
+Logs land in `Documents/Paradox Interactive/Victoria 3/logs/`:
+`error.log` (script errors — keep at zero), `debug.log` (debug_log output).
 
 ---
 

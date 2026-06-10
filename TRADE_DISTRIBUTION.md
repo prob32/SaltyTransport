@@ -398,7 +398,7 @@ GUI visibility is driven by `stl_gui_any_export` / `stl_gui_any_import` script v
 - `common/scripted_triggers/stl_triggers.txt` -- `stl_is_debug_mode` trigger
 - `common/script_values/stl_script_values.txt` -- debug multiplier values
 
-Toggle via console: `effect set_global_variable = { name = stl_debug_mode value = 1 }`
+Toggle via the in-game decision **"Salty Transport: Toggle Debug Modifiers"** (country panel → Decisions).
 
 When enabled, Phase C applies additional diagnostic modifiers showing:
 - `stl_debug_base_*`: Phase B target (eff_export or eff_import value)

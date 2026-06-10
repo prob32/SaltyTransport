@@ -2,7 +2,7 @@
 # Regenerate: python3 tools/generate_goods.py
 
 # Diagnostic modifiers, applied only when stl_debug_mode global = 1.
-# Toggle: effect set_global_variable = { name = stl_debug_mode value = 1 }
+# Toggle via the decision: Salty Transport: Toggle Debug Modifiers
 
 stl_debug_base_grain = {
 	icon = gfx/interface/icons/timed_modifier_icons/modifier_gear_positive.dds

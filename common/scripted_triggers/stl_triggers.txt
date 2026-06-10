@@ -1,6 +1,6 @@
 ﻿# Debug mode check
-# Enable:  effect set_global_variable = { name = stl_debug_mode value = 1 }
-# Disable: effect set_global_variable = { name = stl_debug_mode value = 0 }
+# Toggle via the decision "Salty Transport: Toggle Debug Modifiers"
+# (common/decisions/stl_decisions.txt)
 stl_is_debug_mode = {
 	global_var:stl_debug_mode >= 1
 }
