@@ -355,6 +355,25 @@ scope:stl_gravity_self = {
 }
 ```
 
+**1.13 PITFALL — do not save scopes inside nested transition blocks:**
+
+```
+# BROKEN on 1.13 (worked on 1.12): later reads give
+# "Undefined event target" + "Event target link 'scope' returned an unset scope"
+owner = { market = { save_scope_as = my_market } }
+scope:my_market = { ... }    # fails at runtime, 100% reproducible
+
+# WORKS: save the current scope plainly...
+save_scope_as = my_origin
+# ...and re-derive transitions via links where needed
+market = { every_scope_country = { ... } }          # state -> its market
+market = { this = scope:my_origin.market }           # compare markets
+```
+
+Confirmed live (error.log, 506 occurrences); probe step 7 tracks whether
+the quirk persists across patches. Plain `save_scope_as` on the current
+scope, including use inside nested iterators, works normally.
+
 ### Building References
 
 ```

@@ -133,6 +133,44 @@ stl_probe_variable_maps = {
 		debug_log = "[STL PROBE] FAIL 6: every_key_in_variable_map"
 	}
 
+	# --- 7. saved scope registered inside a nested transition block ---
+	# 1.13 regression observed live: owner = { market = { save_scope_as } }
+	# later resolves as "Undefined event target" (error.log, 506x), while
+	# plain saves work. The mod avoids the pattern; this step tracks whether
+	# the engine quirk persists across patches.
+	owner = {
+		market = {
+			save_scope_as = stl_probe_nested
+		}
+	}
+	if = {
+		limit = { exists = scope:stl_probe_nested }
+		debug_log = "[STL PROBE] PASS 7: nested-block save_scope_as resolves (engine quirk fixed?)"
+		clear_saved_scope = stl_probe_nested
+	}
+	else = {
+		debug_log = "[STL PROBE] INFO 7: nested-block save_scope_as is undefined (known 1.13 quirk - mod avoids it)"
+	}
+
+	# --- 8. plain saved scope read inside a while body ---
+	set_local_variable = { name = stl_probe_w value = 0 }
+	set_local_variable = { name = stl_probe_w_ok value = 0 }
+	while = {
+		limit = { NOT = { local_var:stl_probe_w >= 2 } }
+		change_local_variable = { name = stl_probe_w add = 1 }
+		if = {
+			limit = { exists = scope:stl_probe_self }
+			change_local_variable = { name = stl_probe_w_ok add = 1 }
+		}
+	}
+	if = {
+		limit = { local_var:stl_probe_w_ok >= 2 }
+		debug_log = "[STL PROBE] PASS 8: saved scope readable inside while body"
+	}
+	else = {
+		debug_log = "[STL PROBE] FAIL 8: saved scope lost inside while body"
+	}
+
 	# --- cleanup ---
 	clear_variable_map = stl_probe_map
 	if = {

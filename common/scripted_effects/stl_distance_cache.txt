@@ -22,7 +22,12 @@
 
 stl_run_bellman_ford = {
 	save_scope_as = stl_bf_origin
-	owner = { market = { save_scope_as = stl_bf_market } }
+	# NOTE: do NOT save the market as a scope here. In 1.13, a scope saved
+	# inside a nested transition block (owner = { market = { save_scope_as }})
+	# comes back "Undefined event target" when referenced later (confirmed
+	# from error.log 506x; worked in 1.12). Plain saves on the current scope
+	# (stl_bf_origin) work. We re-derive the market via links instead, which
+	# the same log shows running clean.
 
 	# Reset map; origin distance = 0
 	if = {
@@ -40,7 +45,8 @@ stl_run_bellman_ford = {
 		change_local_variable = { name = stl_bf_pass add = 1 }
 
 		# For each known state S, relax edges to all neighbors N
-		scope:stl_bf_market = {
+		# (scope here = origin state; market link is valid from state)
+		market = {
 			every_scope_country = {
 				every_scope_state = {
 					limit = {
@@ -63,7 +69,7 @@ stl_run_bellman_ford = {
 						every_neighbouring_state = {
 							limit = {
 								has_variable = stl_trade_depot_ref
-								owner = { market = { this = scope:stl_bf_market } }
+								market = { this = scope:stl_bf_origin.market }
 							}
 
 							# friction for entering this neighbor
@@ -115,7 +121,6 @@ stl_run_bellman_ford = {
 	}
 
 	clear_saved_scope = stl_bf_origin
-	clear_saved_scope = stl_bf_market
 }
 
 # Drop the origin's distance map. Cheap (single map on self) — call when done
