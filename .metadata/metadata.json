@@ -1,9 +1,9 @@
 {
 	"name": "Salty Transport - Internal Trade Logistics",
 	"id": "",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"supported_game_version": "1.13.*",
-	"short_description": "Replaces MAPI with directional internal trade: Trade Depots physically move goods between states over the infrastructure network.",
+	"short_description": "Distance-based local goods prices: gravity-weighted, zero-sum price shaping on top of nerfed MAPI, driven by Trade Depots.",
 	"tags": [
 		"Gameplay",
 		"Economy"

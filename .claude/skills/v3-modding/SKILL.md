@@ -88,8 +88,9 @@ description: Victoria 3 (1.13.x) modding workflow for this repo — validation h
 
 ## SaltyTransport specifics
 
-- Architecture: ARCHITECTURE_V2.md (storage maps, two-phase cycle, GUI).
-  Economic model: TRADE_DISTRIBUTION.md.
+- Architecture: ARCHITECTURE_V3.md (price-shaping control law, dials);
+  ARCHITECTURE_V2.md covers the surviving machinery. TRADE_DISTRIBUTION.md
+  is historical (the retired full-replacement model + WAS/WAD math).
 - Per-good state data: name-mangled VARIABLES (`stl_price_<good>`, ...) —
   the `vars` generator backend. Variable maps store values by REFERENCE
   (live-confirmed twice: local_var-sourced values die across chains, and a

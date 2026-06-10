@@ -1,6 +1,7 @@
 ﻿# ========================================
-# TRADE DEPOT BUILDING MANAGEMENT (v2)
-# MAPI is zeroed via urban_planning technology modifier (instant)
+# TRADE DEPOT BUILDING MANAGEMENT (v3)
+# MAPI is nerfed (not zeroed) via the urban_planning override; depots shape
+# local prices with small zero-sum injections (ARCHITECTURE_V3.md).
 # Buildings created in common/history/buildings/stl_global.txt at game start
 # This effect handles: caching refs, applying modifiers, and mid-game safety net
 # ========================================
@@ -50,55 +51,6 @@ stl_ensure_depot_exists = {
 	}
 }
 
-# Ensure exactly one port hub exists per market.
-# v2: scans for the building itself every month instead of trusting a
-# one-shot flag (the v0.1 flag broke when the market owner changed or the
-# hub state was lost; it also could not detect market merges leaving two hubs).
-# Scope: country (market owner only)
-stl_ensure_port_hub_for_market = {
-	set_local_variable = { name = stl_hub_count value = 0 }
-	if = {
-		limit = { this = market.owner }
-		market = {
-			every_scope_country = {
-				every_scope_state = {
-					limit = {
-						any_scope_building = {
-							is_building_type = building_stl_port_hub
-						}
-					}
-					change_local_variable = { name = stl_hub_count add = 1 }
-					# market merge can leave several hubs; keep only the first
-					if = {
-						limit = { local_var:stl_hub_count >= 2 }
-						remove_building = building_stl_port_hub
-						change_local_variable = { name = stl_hub_count subtract = 1 }
-					}
-				}
-			}
-		}
-
-		# none present: place one in a port state of the owner
-		if = {
-			limit = {
-				NOT = { local_var:stl_hub_count >= 1 }
-				any_scope_state = {
-					has_port_state = yes
-				}
-			}
-			random_scope_state = {
-				limit = { has_port_state = yes }
-				create_building = {
-					building = building_stl_port_hub
-					level = 1
-					reserves = 1
-					subsidized = yes
-				}
-			}
-		}
-	}
-}
-
 # Initialize depots across all states of a country.
 # Idempotent; runs at game start, monthly, and yearly as a safety net.
 # Scope: country
@@ -124,7 +76,4 @@ stl_initialize_all_depots = {
 	every_scope_state = {
 		stl_ensure_depot_exists = yes
 	}
-
-	# Ensure exactly one port hub per market
-	stl_ensure_port_hub_for_market = yes
 }

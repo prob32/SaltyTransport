@@ -8,8 +8,10 @@
 		state_infrastructure_from_population_max_add = 20
 		state_building_construction_sector_max_level_add = 5
 		country_max_weekly_construction_progress_add = 5
-		# Salty Transport: zero MAPI so trade depots control goods flow
-		state_market_access_price_impact = -5
+		# Salty Transport v0.3: nerf MAPI to net +3 of vanilla's +5 (40% cut)
+		# so local conditions matter more, while vanilla still arbitrates.
+		# Depot injections shape prices on top (ARCHITECTURE_V3.md).
+		state_market_access_price_impact = -2
 	}
 
 	unlocking_technologies = {

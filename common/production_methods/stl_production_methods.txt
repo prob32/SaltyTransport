@@ -127,15 +127,3 @@ pm_stl_trade_depot_imports = {
 		}
 	}
 }
-
-# Port hub: restores 100% MAPI in the world-market hub state,
-# counteracting the -5 from the urban_planning tech override.
-pm_stl_port_hub_base = {
-	texture = "gfx/interface/icons/production_method_icons/merchant_guilds.dds"
-	is_default = yes
-	state_modifiers = {
-		unscaled = {
-			state_market_access_price_impact = 5
-		}
-	}
-}

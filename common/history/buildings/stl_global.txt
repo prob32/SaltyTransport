@@ -16,10 +16,7 @@
 		}
 	}
 
-	# Port hub creation handled by stl_ensure_port_hub_for_market (via stl_events.1)
-	# One per market, in a port state — uses variable flag to guarantee single placement
-
-	# ALL countries: init depots (cache refs + kill-all modifiers + port hub)
+	# ALL countries: init depots (cache refs + kill-all modifiers)
 	every_country = {
 		trigger_event = {
 			id = stl_events.1

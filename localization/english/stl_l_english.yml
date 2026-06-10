@@ -10,11 +10,6 @@
  pmg_stl_trade_depot_imports:0 "Imports"
  stl_export_kill_all:0 "Export Baseline"
  stl_import_kill_all:0 "Import Baseline"
- building_stl_port_hub:0 "Port Hub"
- building_stl_port_hub_desc:0 "A coastal trade hub that maintains full market access, connecting the internal trade network to the world market."
- bg_stl_port_hub:0 "Port Hub"
- pm_stl_port_hub_base:0 "World Market Connection"
- pmg_stl_port_hub_base:0 "Operations"
 
  # === Trade window ===
  stl_trade_window_title:0 "Internal Trade"

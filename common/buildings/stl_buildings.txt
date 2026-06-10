@@ -19,21 +19,5 @@
 	}
 }
 
-building_stl_port_hub = {
-	building_group = bg_stl_port_hub
-	icon = "gfx/interface/icons/building_icons/stl_trade_depot.dds"
-	background = "gfx/interface/icons/building_icons/backgrounds/building_panel_bg_light_industry.dds"
-	city_type = city
-	levels_per_mesh = 50
-	lens = infrastructure
-
-	expandable = no
-	downsizeable = no
-	ownership_type = self
-	min_raise_to_hire = -1.0
-	residence_points_per_level = 0
-
-	production_method_groups = {
-		pmg_stl_port_hub_base
-	}
-}
+# (v0.3: the Port Hub building was removed — it existed only to restore
+# MAPI at the world-market hub under the v0.2 zeroed-MAPI regime.)

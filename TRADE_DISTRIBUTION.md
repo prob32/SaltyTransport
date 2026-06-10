@@ -1,14 +1,14 @@
-# Salty Transport -- Trade Distribution Guide
+# Salty Transport -- Trade Distribution Guide (v0.1/v0.2 model — HISTORICAL)
 
-> **v0.2 NOTE**: the economic model described here (effective surplus,
-> direction-aware targets, EMA/conservation/transport, friction pathfinding)
-> is unchanged and this document remains its reference. The *implementation*
-> was rearchitected for Vic3 1.13.7+ — per-good storage now lives in variable
-> maps, Phase B reads a once-per-cycle price cache instead of recomputing
-> per pair, batching is queue-based (no 104-state cap), and the GUI is a
-> standalone window. See **ARCHITECTURE_V2.md** for what changed and why;
-> where file names or variable tables below disagree with it,
-> ARCHITECTURE_V2.md wins.
+> **v0.3 NOTE**: the full-replacement model documented here (zeroed MAPI,
+> depots carrying all inter-state goods, direction-aware flow targets) was
+> **retired**. v0.3 keeps vanilla MAPI at reduced strength and uses small,
+> capped, zero-sum injections to create distance-based local price deltas.
+> See **ARCHITECTURE_V3.md** (control law, dials) and ARCHITECTURE_V2.md
+> (the machinery that carried over: price caches, queue batching, gravity
+> pathfinding, conservation, the trade window). This file remains as the
+> reference for the gravity/effective-surplus math that still powers the
+> WAS/WAD signal, and as design history.
 
 ## Overview
 

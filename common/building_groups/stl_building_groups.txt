@@ -19,23 +19,4 @@
 	}
 }
 
-bg_stl_port_hub = {
-	parent_group = bg_private_infrastructure
-	category = urban
-	lens = infrastructure
-	always_possible = yes
-	always_self_owning = yes
-	economy_of_scale = no
-	urbanization = 0
-	infrastructure_usage_per_level = 0
-	cash_reserves_max = 25000
-	fired_pops_become_radical = no
-	min_hiring_rate = 1.0
-	max_hiring_rate = 1.0
-	ignores_productivity_when_hiring = yes
-	proportionality_limit = 1.0
-	can_use_slaves = no
-	should_auto_expand = {
-		always = no
-	}
-}
+# (v0.3: bg_stl_port_hub removed with the Port Hub building.)
