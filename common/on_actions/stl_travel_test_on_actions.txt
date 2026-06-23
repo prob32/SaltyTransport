@@ -1,0 +1,52 @@
+﻿# ========================================
+# TRAVEL SCOPE PROBE - ON_ACTION HOOKS (DEBUG / DISPOSABLE)
+#
+# These five on_actions fire when a travel order is CANCELLED.
+# They are the ONLY documented places the engine might hand a
+# travel_node / travel_connection into script context.
+#
+# Expected Scope is "none" per the docs, so ROOT may be the
+# military_formation, a state, or nothing - the probe's
+# debug_log_scopes dump will reveal whatever is actually there.
+#
+# REPRODUCE: order a formation to travel (deploy to front, deploy
+# to state, deploy to sea node, station in HQ, or track a formation),
+# then CANCEL it before it arrives. That fires the matching on_action.
+#
+# NOTE: these on_actions only exist in Victoria 3 1.13.x.
+# ========================================
+
+on_travel_to_front_cancelled = {
+	effect = {
+		debug_log = "STL_TRAVEL_PROBE [on_travel_to_front_cancelled]"
+		stl_travel_scope_probe = yes
+	}
+}
+
+on_travel_deploy_to_state_cancelled = {
+	effect = {
+		debug_log = "STL_TRAVEL_PROBE [on_travel_deploy_to_state_cancelled]"
+		stl_travel_scope_probe = yes
+	}
+}
+
+on_travel_deploy_to_sea_node_cancelled = {
+	effect = {
+		debug_log = "STL_TRAVEL_PROBE [on_travel_deploy_to_sea_node_cancelled]"
+		stl_travel_scope_probe = yes
+	}
+}
+
+on_travel_station_in_hq_cancelled = {
+	effect = {
+		debug_log = "STL_TRAVEL_PROBE [on_travel_station_in_hq_cancelled]"
+		stl_travel_scope_probe = yes
+	}
+}
+
+on_travel_track_formation_cancelled = {
+	effect = {
+		debug_log = "STL_TRAVEL_PROBE [on_travel_track_formation_cancelled]"
+		stl_travel_scope_probe = yes
+	}
+}

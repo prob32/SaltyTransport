@@ -1,0 +1,56 @@
+﻿# ========================================
+# TRAVEL SCOPE PROBE (DEBUG / DISPOSABLE)
+#
+# Goal: find out whether the engine ever places a travel_node /
+# travel_connection (or their *_definition variants) into script
+# scope, and if so under what name and type.
+#
+# How it works:
+#   - debug_log_scopes = yes dumps the FULL current scope tree
+#     (ROOT, PREV, and every saved scope WITH its type) to the log.
+#     If a travel scope is ever in context, it shows up here.
+#   - We also probe each documented "Save Token" directly, in case
+#     the engine auto-saves it under its type name (scope:travel_node ...).
+#
+# Every line is tagged STL_TRAVEL_PROBE so you can grep the logs.
+# Requires the game launched with -debug_mode for debug_log* output.
+# ========================================
+
+stl_travel_scope_probe = {
+	debug_log = "STL_TRAVEL_PROBE --- begin scope dump ---"
+
+	# THE key line: dumps ROOT/PREV/all saved scopes and their TYPES.
+	debug_log_scopes = yes
+
+	# Direct probes of the four documented Save Tokens.
+	# exists = scope:<name> safely returns false if not present (no error).
+	if = {
+		limit = { exists = scope:travel_node }
+		debug_log = "STL_TRAVEL_PROBE travel_node = PRESENT"
+		scope:travel_node = { debug_log_scopes = no }   # log just this scope + its type
+	}
+	else = { debug_log = "STL_TRAVEL_PROBE travel_node = absent" }
+
+	if = {
+		limit = { exists = scope:travel_node_definition }
+		debug_log = "STL_TRAVEL_PROBE travel_node_definition = PRESENT"
+		scope:travel_node_definition = { debug_log_scopes = no }
+	}
+	else = { debug_log = "STL_TRAVEL_PROBE travel_node_definition = absent" }
+
+	if = {
+		limit = { exists = scope:travel_connection }
+		debug_log = "STL_TRAVEL_PROBE travel_connection = PRESENT"
+		scope:travel_connection = { debug_log_scopes = no }
+	}
+	else = { debug_log = "STL_TRAVEL_PROBE travel_connection = absent" }
+
+	if = {
+		limit = { exists = scope:travel_connection_definition }
+		debug_log = "STL_TRAVEL_PROBE travel_connection_definition = PRESENT"
+		scope:travel_connection_definition = { debug_log_scopes = no }
+	}
+	else = { debug_log = "STL_TRAVEL_PROBE travel_connection_definition = absent" }
+
+	debug_log = "STL_TRAVEL_PROBE --- end scope dump ---"
+}

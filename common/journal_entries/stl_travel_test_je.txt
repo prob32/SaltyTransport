@@ -1,0 +1,26 @@
+﻿# ========================================
+# TRAVEL SCOPE PROBE - JOURNAL ENTRY (DEBUG / DISPOSABLE)
+#
+# Always-active JE for every country so the player gets a clickable
+# button in the Journal. It never completes - it's just a debug panel.
+# ========================================
+
+je_stl_travel_scope_test = {
+	icon = "gfx/interface/icons/event_icons/event_industry.dds"
+
+	# Renders the probe button in the JE panel.
+	scripted_button = stl_travel_scope_test_button
+
+	# Activate for everyone, no context needed.
+	is_shown_when_inactive = { always = yes }
+	possible = { always = yes }
+
+	immediate = {
+		debug_log = "STL_TRAVEL_PROBE [je_stl_travel_scope_test activated]"
+	}
+
+	# Never auto-completes or fails: stays available as a debug panel.
+	complete = { always = no }
+
+	should_be_closed_effect = {}
+}
