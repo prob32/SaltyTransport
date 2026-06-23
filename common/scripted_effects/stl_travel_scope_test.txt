@@ -4,50 +4,47 @@
 # Determines whether the engine ever places travel_node /
 # travel_connection (or *_definition) into script scope.
 #
-#   - debug_log_scopes = yes dumps the FULL current scope tree
-#     (ROOT, PREV, every saved scope WITH its type) to game.log.
-#     If a travel scope is ever in context, it shows up here.
-#   - The exists = scope:<token> checks probe the documented Save
-#     Tokens directly. NOTE: the loader already reports these four
-#     event targets as "used but never set" - so they are expected
-#     to always log "absent". The dump is the real evidence.
+#   - error_log writes to error.log ALWAYS (no -debug_mode needed),
+#     so the PRESENT/absent results are always visible.
+#   - debug_log_scopes = yes dumps the FULL scope tree to game.log,
+#     but only when the game is launched with -debug_mode.
 #
-# Every line is tagged STL_TRAVEL_PROBE. No '[' ']' in debug_log
-# strings (they are parsed as data promotes). Requires -debug_mode.
-# Output: game.log / debug.log, NOT error.log.
+# Every line is tagged STL_TRAVEL_PROBE. No '[' ']' in log strings
+# (they are parsed as data promotes and error out).
 # ========================================
 
 stl_travel_scope_probe = {
-	debug_log = "STL_TRAVEL_PROBE begin_scope_dump"
+	error_log = "STL_TRAVEL_PROBE begin_scope_dump"
 
-	# THE key line: dumps ROOT/PREV/all saved scopes and their TYPES.
+	# Full scope tree (ROOT/PREV/all saved scopes + types) -> game.log,
+	# requires -debug_mode. Harmless if debug mode is off.
 	debug_log_scopes = yes
 
 	# Direct probes of the four documented Save Tokens.
 	# exists = scope:<name> safely returns false if not present.
 	if = {
 		limit = { exists = scope:travel_node }
-		debug_log = "STL_TRAVEL_PROBE travel_node_PRESENT"
+		error_log = "STL_TRAVEL_PROBE travel_node_PRESENT"
 	}
-	else = { debug_log = "STL_TRAVEL_PROBE travel_node_absent" }
+	else = { error_log = "STL_TRAVEL_PROBE travel_node_absent" }
 
 	if = {
 		limit = { exists = scope:travel_node_definition }
-		debug_log = "STL_TRAVEL_PROBE travel_node_definition_PRESENT"
+		error_log = "STL_TRAVEL_PROBE travel_node_definition_PRESENT"
 	}
-	else = { debug_log = "STL_TRAVEL_PROBE travel_node_definition_absent" }
+	else = { error_log = "STL_TRAVEL_PROBE travel_node_definition_absent" }
 
 	if = {
 		limit = { exists = scope:travel_connection }
-		debug_log = "STL_TRAVEL_PROBE travel_connection_PRESENT"
+		error_log = "STL_TRAVEL_PROBE travel_connection_PRESENT"
 	}
-	else = { debug_log = "STL_TRAVEL_PROBE travel_connection_absent" }
+	else = { error_log = "STL_TRAVEL_PROBE travel_connection_absent" }
 
 	if = {
 		limit = { exists = scope:travel_connection_definition }
-		debug_log = "STL_TRAVEL_PROBE travel_connection_definition_PRESENT"
+		error_log = "STL_TRAVEL_PROBE travel_connection_definition_PRESENT"
 	}
-	else = { debug_log = "STL_TRAVEL_PROBE travel_connection_definition_absent" }
+	else = { error_log = "STL_TRAVEL_PROBE travel_connection_definition_absent" }
 
-	debug_log = "STL_TRAVEL_PROBE end_scope_dump"
+	error_log = "STL_TRAVEL_PROBE end_scope_dump"
 }

@@ -1,19 +1,17 @@
 ﻿# ========================================
 # TRAVEL SCOPE PROBE - ON_ACTION HOOKS (DEBUG / DISPOSABLE)
 #
-# These five on_actions fire when a travel order is CANCELLED.
-# They are the ONLY documented places the engine might hand a
-# travel_node / travel_connection into script context.
+# These five on_actions fire when a travel order is CANCELLED -
+# the only documented places the engine might hand a travel_node /
+# travel_connection into script context.
 #
-# Uses the on_actions={} list pattern (matches stl_on_actions.txt)
-# so we APPEND our handler instead of overwriting the base effect.
+# Uses on_actions={} list pattern so we APPEND (don't overwrite).
+# error_log output -> error.log (always). debug_log_scopes -> game.log
+# (only with -debug_mode).
 #
-# REPRODUCE: order a formation to travel (deploy to front, deploy
-# to state, deploy to sea node, station in HQ, or track a formation),
-# then CANCEL it before it arrives.
-#
+# REPRODUCE: order a formation to travel (deploy to front/state/sea
+# node, station in HQ, or track a formation), then CANCEL it.
 # NOTE: these on_actions only exist in Victoria 3 1.13.x.
-# Output goes to game.log / debug.log (NOT error.log). Grep STL_TRAVEL_PROBE.
 # ========================================
 
 on_travel_to_front_cancelled = {
@@ -21,7 +19,7 @@ on_travel_to_front_cancelled = {
 }
 stl_oa_travel_to_front_cancelled = {
 	effect = {
-		debug_log = "STL_TRAVEL_PROBE oa_travel_to_front_cancelled"
+		error_log = "STL_TRAVEL_PROBE oa_travel_to_front_cancelled"
 		stl_travel_scope_probe = yes
 	}
 }
@@ -31,7 +29,7 @@ on_travel_deploy_to_state_cancelled = {
 }
 stl_oa_travel_deploy_to_state_cancelled = {
 	effect = {
-		debug_log = "STL_TRAVEL_PROBE oa_travel_deploy_to_state_cancelled"
+		error_log = "STL_TRAVEL_PROBE oa_travel_deploy_to_state_cancelled"
 		stl_travel_scope_probe = yes
 	}
 }
@@ -41,7 +39,7 @@ on_travel_deploy_to_sea_node_cancelled = {
 }
 stl_oa_travel_deploy_to_sea_node_cancelled = {
 	effect = {
-		debug_log = "STL_TRAVEL_PROBE oa_travel_deploy_to_sea_node_cancelled"
+		error_log = "STL_TRAVEL_PROBE oa_travel_deploy_to_sea_node_cancelled"
 		stl_travel_scope_probe = yes
 	}
 }
@@ -51,7 +49,7 @@ on_travel_station_in_hq_cancelled = {
 }
 stl_oa_travel_station_in_hq_cancelled = {
 	effect = {
-		debug_log = "STL_TRAVEL_PROBE oa_travel_station_in_hq_cancelled"
+		error_log = "STL_TRAVEL_PROBE oa_travel_station_in_hq_cancelled"
 		stl_travel_scope_probe = yes
 	}
 }
@@ -61,7 +59,7 @@ on_travel_track_formation_cancelled = {
 }
 stl_oa_travel_track_formation_cancelled = {
 	effect = {
-		debug_log = "STL_TRAVEL_PROBE oa_travel_track_formation_cancelled"
+		error_log = "STL_TRAVEL_PROBE oa_travel_track_formation_cancelled"
 		stl_travel_scope_probe = yes
 	}
 }

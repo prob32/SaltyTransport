@@ -1,0 +1,24 @@
+﻿# ========================================
+# TRAVEL SCOPE PROBE - DECISION (DEBUG / DISPOSABLE)
+#
+# A decision is the most reliable clickable: it always shows in the
+# Decisions panel when is_shown passes. Use this if the JE button
+# does not appear. Runs in country scope (baseline).
+# ========================================
+
+stl_travel_scope_test_decision = {
+	is_shown = { always = yes }
+	possible = { always = yes }
+
+	when_taken = {
+		error_log = "STL_TRAVEL_PROBE decision_country_baseline"
+		stl_travel_scope_probe = yes
+
+		every_military_formation = {
+			error_log = "STL_TRAVEL_PROBE formation_baseline"
+			stl_travel_scope_probe = yes
+		}
+	}
+
+	ai_chance = { base = 0 }
+}

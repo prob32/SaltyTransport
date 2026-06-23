@@ -1,24 +1,18 @@
 ﻿# ========================================
 # TRAVEL SCOPE PROBE - JE BUTTON (DEBUG / DISPOSABLE)
-#
-# Runs in the JE root scope (owning country) - a BASELINE where a
-# travel scope is NOT expected. Confirms logging works and dumps the
-# scope tree for the country and each of its military formations.
-# The real signal comes from the on_action hooks.
-#
-# NOTE: no '[' ']' in debug_log strings - they are parsed as data
-# system promotes and error out.
+# Runs in JE root scope (owning country) - a BASELINE.
+# Uses error_log so output always lands in error.log.
 # ========================================
 
 stl_travel_scope_test_button = {
 	visible = { always = yes }
 
 	effect = {
-		debug_log = "STL_TRAVEL_PROBE je_button_country_baseline"
+		error_log = "STL_TRAVEL_PROBE je_button_country_baseline"
 		stl_travel_scope_probe = yes
 
 		every_military_formation = {
-			debug_log = "STL_TRAVEL_PROBE formation_baseline"
+			error_log = "STL_TRAVEL_PROBE formation_baseline"
 			stl_travel_scope_probe = yes
 		}
 	}
