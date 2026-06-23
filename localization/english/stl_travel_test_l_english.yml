@@ -1,5 +1,6 @@
 ﻿l_english:
  je_stl_travel_scope_test:0 "Travel Scope Probe (DEBUG)"
- je_stl_travel_scope_test_desc:0 "Debug harness for travel_node / travel_connection scopes. Click the button below, then order a formation to travel somewhere and cancel it. Check the logs for lines tagged STL_TRAVEL_PROBE."
+ je_stl_travel_scope_test_desc:0 "Debug harness for travel_node / travel_connection scopes. Click the button below, then order a formation to travel somewhere and cancel it. Check game.log for lines tagged STL_TRAVEL_PROBE."
+ je_stl_travel_scope_test_reason:0 "Probing whether the engine exposes travel-network scopes to script."
  stl_travel_scope_test_button:0 "Run Travel Scope Probe"
  stl_travel_scope_test_button_desc:0 "Dumps the current scope tree (and each military formation's scope) to the debug log."

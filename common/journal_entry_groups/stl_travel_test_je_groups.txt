@@ -1,0 +1,8 @@
+﻿# ========================================
+# TRAVEL SCOPE PROBE - JOURNAL ENTRY GROUP (DEBUG / DISPOSABLE)
+# country context so the JE is per-country (not contextless).
+# ========================================
+
+journalentrygroup_stl_travel_test = {
+	context = country
+}
